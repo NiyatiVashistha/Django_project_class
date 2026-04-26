@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Payment Successful{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5 mb-5">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card card-material text-center p-5">
+            <div class="mb-4">
+                <!-- Checkmark Icon using SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="#34a853" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+            </div>
+            <h2 class="mb-3" style="color: #1e8e3e; font-weight: bold;">Payment Successful!</h2>
+            <p class="text-secondary mb-4 fs-5">
+                Thank you for purchasing <strong class="text-dark">{{ course.title }}</strong>. Your enrollment is now active.
+            </p>
+            <a href="{% url 'courses:learn' course.slug %}" class="btn btn-google btn-lg px-5 mt-2">Start Learning Now</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

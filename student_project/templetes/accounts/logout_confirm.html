@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Sign Out{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="card card-material p-4 mt-5 text-center">
+            <h3 class="mb-4" style="font-weight: 500;">Confirm Sign Out</h3>
+            <p class="text-secondary mb-4">Are you sure you want to log out of your session?</p>
+            
+            <form method="post" class="d-flex justify-content-center gap-3">
+                {% csrf_token %}
+                <a href="{% url 'courses:course_list' %}" class="btn btn-google-outline py-2 px-4">Cancel</a>
+                <button type="submit" class="btn btn-danger py-2 px-4" style="font-weight: 500;">Sign Out</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

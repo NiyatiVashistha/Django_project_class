@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard - Google LMS{% endblock %}
+{% block content %}
+<h2 class="mb-4" style="font-weight: 500; color: #202124;">Welcome to your Dashboard, {{ request.user.username }}!</h2>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card card-material h-100 p-4 border-0" style="background-color: #fce8e6;">
+            <h5 class="text-secondary mb-3" style="font-weight: 500;">Total Enrollments</h5>
+            <p class="display-5 fw-bold mb-0" style="color: #d93025;">{{ enrollment_count }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-material h-100 p-4 border-0" style="background-color: #e6f4ea;">
+            <h5 class="text-secondary mb-3" style="font-weight: 500;">Total Spent</h5>
+            <p class="display-5 fw-bold mb-0" style="color: #1e8e3e;">₹{{ total_spent }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-material h-100 p-4 border-0" style="background-color: #e8f0fe;">
+            <h5 class="text-secondary mb-3" style="font-weight: 500;">Active Courses</h5>
+            <p class="display-5 fw-bold mb-0" style="color: #1a73e8;">{{ status_counts.active|default:"0" }}</p>
+        </div>
+    </div>
+</div>
+
+<h3 class="mb-4" style="font-weight: 500; color: #202124;">Your Learning Path</h3>
+<div class="row g-4 mb-5">
+    {% for enroll in enrollments %}
+        <div class="col-md-4">
+            <div class="card card-material h-100 border-top-0 border-end-0 border-bottom-0 border-start {% if enroll.status == 'completed' %}border-success{% else %}border-primary{% endif %}" style="border-width: 4px !important;">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-dark">{{ enroll.course.title }}</h5>
+                    <p class="text-secondary small mb-3">Status: <strong class="text-capitalize text-dark">{{ enroll.status }}</strong></p>
+                    <p class="text-muted small">Enrolled: {{ enroll.enrolled_at|date }}</p>
+                    <a href="{% url 'courses:learn' enroll.course.slug %}" class="btn btn-sm btn-google-outline mt-2 w-100">
+                        {% if enroll.status == 'completed' %}Review Material{% else %}Continue Learning{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-light text-center py-5 border" role="alert">
+                <p class="text-muted mb-0">You haven't enrolled in any courses yet. <a href="{% url 'courses:course_list' %}" class="text-decoration-none fw-bold" style="color: #1a73e8;">Explore here!</a></p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

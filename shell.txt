@@ -1,0 +1,45 @@
+# HOW TO ADD COURSES DIRECTLY VIA DJANGO SHELL
+# Note: To ensure courses are "on display" in the website, they MUST have `is_published=True`
+
+# 1. Open your terminal and start the shell:
+# python manage.py shell
+
+# 2. Paste the following Python code block into the shell and hit Enter:
+
+from accounts.models import User
+from courses.models import Course, Category
+from decimal import Decimal
+
+# Get an instructor account or create one
+instructor, _ = User.objects.get_or_create(
+    username="shell_instructor", 
+    email="shell@instructor.com", 
+    defaults={"role": User.Role.INSTRUCTOR}
+)
+instructor.set_password("shell123")
+instructor.save()
+
+# Create or get a category
+cat, _ = Category.objects.get_or_create(name="Data Anaylsis", slug="data-anylsis")
+
+# Create a new PUBLISHED course so it displays on the landing page immediately
+new_course = Course.objects.create(
+    title="Data Anaylsis for Beginners",
+    description="Learn pandas, numpy, and introductory data anylsis concepts from scratch.",
+    price=Decimal("55.99"),
+    difficulty=Course.DifficultyLevel.BEGINNER,
+    category=cat,
+    instructor=instructor,
+    is_published=True # CRITICAL: This is what makes it visible on the UI dynamically!
+)
+
+print(f"Successfully published course: {new_course.title}")
+
+# ==========================================
+# EXTRA: HOW TO SEED CUSTOM CATEGORIES
+# ==========================================
+# Creating categories makes them INSTANTLY visible in the Frontend Search dropdown filter.
+
+# cat_ai = Category.objects.create(name="Artificial Intelligence", slug="ai-artificial")
+# cat_design = Category.objects.create(name="UI/UX Product Design", slug="ui-ux-design")
+# print("Finished adding Custom Categories directly to the Search Engine!")

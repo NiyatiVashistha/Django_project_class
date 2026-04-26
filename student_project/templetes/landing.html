@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Welcome - Platform{% endblock %}
+{% block content %}
+
+{% comment %}
+  EDUCATIONAL COMMENT:
+  Because we used {% extends 'base.html' %}, this block seamlessly swaps
+  out the empty block inside base.html
+{% endcomment %}
+
+<div class="text-center py-5 mb-5 rounded-4" style="background-color: #e8f0fe; border: 1px solid #d2e3fc;">
+    <h1 class="display-4 fw-bold" style="color: #1a73e8;">Learn Django Effectively</h1>
+    <p class="lead text-secondary mx-auto mt-3" style="max-width: 600px;">A clean, professionally designed educational LMS project to teach you Model-View-Template architecture inside out!</p>
+    <a href="{% url 'courses:course_list' %}" class="btn btn-google btn-lg mt-3">Explore All Courses</a>
+</div>
+
+<h3 class="mb-4 text-dark" style="font-weight: 500;">Featured Courses</h3>
+<div class="row g-4">
+    {% comment %}
+      EDUCATIONAL COMMENT:
+      Iterating over a Python QuerySet using a Django Template for loop!
+    {% endcomment %}
+    {% for course in courses %}
+        <div class="col-md-4">
+            <div class="card card-material h-100 p-3">
+                <div class="card-body px-2 py-1">
+                    <h5 class="card-title text-dark">{{ course.title }}</h5>
+                    <p class="card-text text-secondary mt-3" style="font-size: 0.95rem;">{{ course.description|truncatewords:20 }}</p>
+                </div>
+                <div class="card-footer bg-white border-0 px-2 pb-1 pt-3 mt-auto">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-dark fw-bold">{% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}</span>
+                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-google-outline btn-sm">Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <p class="text-muted">No published courses available right now.</p>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

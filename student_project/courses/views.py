@@ -1,0 +1,388 @@
+import json
+from functools import wraps
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Sum, Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
+
+from courses.models import Course, Enrollment, Lesson, Payment
+from courses.services import (
+    search_courses,
+    enroll_student,
+    is_enrolled,
+    create_stripe_checkout_session,
+    finalize_stripe_payment,
+    get_student_dashboard_data,
+    log_course_activity,
+)
+
+
+# ──────────────────────────────────────────────
+# Decorators
+# ──────────────────────────────────────────────
+
+def instructor_required(view_func):
+    """Allow only users whose role is 'instructor'."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated or not getattr(request.user, 'is_instructor', False):
+            raise PermissionDenied("Only instructors can access this area.")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+def admin_required(view_func):
+    """Allow only users whose role is 'admin'."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated or getattr(request.user, 'role', '') != 'admin':
+            raise PermissionDenied("Only Administrators can access this area.")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+# ──────────────────────────────────────────────
+# Public Views
+# ──────────────────────────────────────────────
+
+def landing_view(request):
+    courses = Course.objects.filter(is_published=True).order_by("-created_at")[:9]
+    return render(request, "landing.html", {"courses": courses})
+
+
+def course_list_view(request):
+    from courses.forms import SearchForm
+
+    form = SearchForm(request.GET or None)
+    query = ""
+    sort_by = ""
+    category_id = None
+
+    if form.is_valid():
+        query = form.cleaned_data["q"]
+        sort_by = form.cleaned_data.get("sort")
+        category = form.cleaned_data.get("category")
+        if category:
+            category_id = category.id
+
+    page_number = request.GET.get("page", 1)
+
+    page_obj, paginator = search_courses(
+        query=query,
+        sort_by=sort_by,
+        category_id=category_id,
+        user=request.user,
+        page=page_number,
+    )
+
+    return render(request, "courses/course_list.html", {
+        "form": form,
+        "query": query,
+        "page_obj": page_obj,
+        "paginator": paginator,
+    })
+
+
+def course_detail_view(request, slug):
+    course = get_object_or_404(
+        Course.objects.select_related("instructor", "category"),
+        slug=slug,
+        is_published=True,
+    )
+
+    lessons = course.lessons.all().order_by("order")
+    enrolled = request.user.is_authenticated and is_enrolled(request.user, course)
+
+    return render(request, "courses/course_detail.html", {
+        "course": course,
+        "lessons": lessons,
+        "enrolled": enrolled,
+    })
+
+
+# ──────────────────────────────────────────────
+# Enrollment & Payment Views
+# ──────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["POST"])
+def enroll_view(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+    enrollment, created = enroll_student(request.user, course)
+
+    if created:
+        messages.success(request, "Enrollment successful.")
+    else:
+        messages.info(request, "Already enrolled.")
+
+    return redirect("courses:learn" if course.is_free else "courses:payment", slug=slug)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def payment_view(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+
+    try:
+        enrollment = Enrollment.objects.get(student=request.user, course=course)
+    except Enrollment.DoesNotExist:
+        messages.error(request, "Enroll first.")
+        return redirect("courses:course_detail", slug=slug)
+
+    payment, _ = Payment.objects.get_or_create(
+        enrollment=enrollment,
+        defaults={"amount": course.price, "status": Payment.Status.PENDING},
+    )
+
+    if payment.status == Payment.Status.COMPLETED:
+        return redirect("courses:learn", slug=slug)
+
+    if request.method == "POST":
+        session, _ = create_stripe_checkout_session(request, enrollment)
+        return redirect(session.url, permanent=False)
+
+    return render(request, "courses/payment.html", {
+        "course": course,
+        "payment": payment,
+        "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
+    })
+
+
+@login_required
+def payment_success_view(request, slug):
+    session_id = request.GET.get("session_id")
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+
+    if session_id:
+        payment = finalize_stripe_payment(session_id)
+        if payment:
+            messages.success(request, "Payment successful.")
+        else:
+            messages.warning(request, "Payment not confirmed.")
+
+    return render(request, "courses/payment_success.html", {"course": course})
+
+
+# ──────────────────────────────────────────────
+# Learning View
+# ──────────────────────────────────────────────
+
+@login_required
+def learn_view(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+
+    try:
+        enrollment = Enrollment.objects.get(
+            student=request.user,
+            course=course,
+            status__in=[Enrollment.Status.ACTIVE, Enrollment.Status.COMPLETED],
+        )
+    except Enrollment.DoesNotExist:
+        return redirect("courses:course_detail", slug=slug)
+
+    if not course.is_free:
+        try:
+            if enrollment.payment.status != Payment.Status.COMPLETED:
+                return redirect("courses:payment", slug=slug)
+        except Payment.DoesNotExist:
+            return redirect("courses:payment", slug=slug)
+
+    lessons = course.lessons.all().order_by("order")
+
+    # BUG FIX: wrapped in try/except so MongoDB being offline never breaks the learn page
+    try:
+        log_course_activity(request.user.id, request.path, {"course_id": course.id})
+    except Exception:
+        pass
+
+    return render(request, "courses/learn.html", {
+        "course": course,
+        "lessons": lessons,
+    })
+
+
+# ──────────────────────────────────────────────
+# Student Dashboard
+# ──────────────────────────────────────────────
+
+@login_required
+def dashboard_view(request):
+    data = get_student_dashboard_data(request.user)
+    return render(request, "courses/dashboard.html", data)
+
+
+# ──────────────────────────────────────────────
+# Instructor Views
+# ──────────────────────────────────────────────
+
+@login_required
+@instructor_required
+def instructor_dashboard_view(request):
+    courses = Course.objects.filter(instructor=request.user).annotate(
+        enrollment_count=Count('enrollments'),
+        total_revenue=Sum(
+            'enrollments__payment__amount',
+            filter=Q(enrollments__payment__status=Payment.Status.COMPLETED)
+        )
+    )
+    return render(request, "courses/instructor_dashboard.html", {"courses": courses})
+
+
+@login_required
+@instructor_required
+def course_create_view(request):
+    from courses.forms import CourseForm
+    if request.method == "POST":
+        form = CourseForm(request.POST, request.FILES)
+        if form.is_valid():
+            course = form.save(commit=False)
+            course.instructor = request.user
+            course.save()
+            messages.success(request, "Course successfully created!")
+            return redirect("courses:instructor_dashboard")
+    else:
+        form = CourseForm()
+    return render(request, "courses/course_form.html", {"form": form})
+
+
+@login_required
+@instructor_required
+def lesson_create_view(request, slug):
+    from courses.forms import LessonForm
+    course = get_object_or_404(Course, slug=slug, instructor=request.user)
+
+    if request.method == "POST":
+        form = LessonForm(request.POST)
+        if form.is_valid():
+            lesson = form.save(commit=False)
+            lesson.course = course
+            if Lesson.objects.filter(course=course, order=lesson.order).exists():
+                messages.error(request, f"Chapter {lesson.order} already exists for this course!")
+            else:
+                lesson.save()
+                messages.success(request, "Chapter successfully added to course!")
+                return redirect("courses:instructor_dashboard")
+    else:
+        next_order = course.lessons.count() + 1
+        form = LessonForm(initial={"order": next_order})
+
+    return render(request, "courses/lesson_form.html", {"form": form, "course": course})
+
+
+# ──────────────────────────────────────────────
+# Admin Analytics
+# ──────────────────────────────────────────────
+
+@login_required
+@admin_required
+def admin_analytics_view(request):
+    from accounts.models import User
+
+    total_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or 0
+    total_users = User.objects.count()
+    total_courses = Course.objects.count()
+    total_enrollments = Enrollment.objects.count()
+
+    instructors = User.objects.filter(role='instructor').annotate(
+        course_count=Count('courses_taught', distinct=True),
+        total_students=Count('courses_taught__enrollments', distinct=True),
+        revenue_generated=Sum(
+            'courses_taught__enrollments__payment__amount',
+            filter=Q(courses_taught__enrollments__payment__status='completed')
+        )
+    )
+
+    return render(request, "admin/analytics_dashboard.html", {
+        "total_revenue": total_revenue,
+        "total_users": total_users,
+        "total_courses": total_courses,
+        "total_enrollments": total_enrollments,
+        "instructors": instructors,
+    })
+
+
+# ──────────────────────────────────────────────
+# Static / FAQ Page
+# ──────────────────────────────────────────────
+
+def faq_view(request):
+    return render(request, "pages/faq.html")
+
+
+# ──────────────────────────────────────────────
+# Chatbot API
+# ──────────────────────────────────────────────
+
+def chat_api_view(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        query = data.get("message", "").lower().strip()
+
+        if not query:
+            return JsonResponse({"response": "It seems you didn't type anything. How can I help?"})
+
+        # ── Greetings ──
+        if "hello" in query or "hi" in query:
+            return JsonResponse({"response": "Hello! Welcome to Academic LMS. I am your specialised Assistant. How can I help you today?"})
+
+        # ── Password / reset ──
+        if "password" in query or "reset" in query:
+            return JsonResponse({"response": "You can reset your password by clicking 'Forgot password?' on the Sign In page!"})
+
+        # ── Role-aware greeting ──
+        try:
+            user_role = getattr(request.user, 'role', '') if request.user.is_authenticated else ''
+        except Exception:
+            user_role = ''
+
+        # ── Instructor insight (requires MongoDB) ──
+        if user_role == 'instructor' and any(word in query for word in ["popular", "teach", "demand", "idea"]):
+            try:
+                from accounts.mongo import get_db
+                db = get_db()
+                if db is not None:
+                    cursor = db.search_logs.aggregate([
+                        {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+                        {"$sort": {"count": -1}},
+                        {"$limit": 1},
+                    ], maxTimeMS=2000)
+                    top_search = list(cursor)
+                    if top_search and top_search[0]["_id"] and top_search[0]["_id"].strip():
+                        suggestion = top_search[0]["_id"]
+                        return JsonResponse({
+                            "response": f"[Instructor Insight] Based on our active database metrics, users are heavily searching for **'{suggestion}'**. I highly recommend you build a course around this to maximise sales!"
+                        })
+                    else:
+                        return JsonResponse({"response": "[Instructor Insight] We do NOT have enough search metrics recorded today to confidently suggest a topic."})
+                else:
+                    return JsonResponse({"response": "I tried to fetch some instructor insights for you, but our metrics database is currently offline. Please try again later!"})
+            except Exception:
+                return JsonResponse({"response": "I tried to fetch some instructor insights for you, but our metrics database is currently offline. Please try again later!"})
+
+        # ── Become instructor ──
+        if "instructor" in query or "teach" in query:
+            return JsonResponse({"response": "To become an instructor and start creating courses, please navigate to the 'Become an Instructor' pipeline at the bottom of the page."})
+
+        # ── Dynamic course search from DB ──
+        courses = Course.objects.filter(title__icontains=query, is_published=True)
+        if courses.exists():
+            course = courses.first()
+            if course.is_free:
+                return JsonResponse({"response": f"I found a matching course: **'{course.title}'**. Great news, it is completely FREE! Go to 'Available Courses' to enroll."})
+            return JsonResponse({"response": f"I found a matching course: **'{course.title}'**. It costs ₹{course.price}. You can find it on the 'Available Courses' page!"})
+
+        # ── Fallback ──
+        return JsonResponse({"response": "I am not exactly sure about that, but you can try using our main Search Bar or visiting the FAQ page!"})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"response": "I couldn't understand your message. Please try again."}, status=400)
+    except Exception as e:
+        return JsonResponse({"response": f"I encountered a technical error. Please contact support if this persists."}, status=500)

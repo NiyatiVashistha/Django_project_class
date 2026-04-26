@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Admin Analytics{% endblock %}
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h2 style="color: #202124; font-weight: 500;">Admin Analytics Dashboard</h2>
+    <span class="badge bg-success p-2">Global Overview</span>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card card-material p-4 text-center border-0 border-top border-4 border-success">
+            <h6 class="text-secondary mb-2" style="font-weight: 500;">Total Revenue</h6>
+            <h3 style="color: #1e8e3e; font-weight: bold;">₹{{ total_revenue }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-material p-4 text-center border-0 border-top border-4 border-primary">
+            <h6 class="text-secondary mb-2" style="font-weight: 500;">Total Users</h6>
+            <h3 style="color: #1a73e8; font-weight: bold;">{{ total_users }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-material p-4 text-center border-0 border-top border-4 border-warning">
+            <h6 class="text-secondary mb-2" style="font-weight: 500;">Live Courses</h6>
+            <h3 style="color: #fbbc04; font-weight: bold;">{{ total_courses }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-material p-4 text-center border-0 border-top border-4 border-danger">
+            <h6 class="text-secondary mb-2" style="font-weight: 500;">Total Enrollments</h6>
+            <h3 style="color: #ea4335; font-weight: bold;">{{ total_enrollments }}</h3>
+        </div>
+    </div>
+</div>
+
+<h4 class="mb-3" style="color: #202124; font-weight: 500;">Instructor Performance Leaderboard</h4>
+<div class="card card-material mb-5">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead style="background-color: #f8f9fa;">
+                <tr>
+                    <th class="px-4 py-3 text-secondary text-uppercase" style="font-size: 0.8rem; font-weight: bold;">Instructor</th>
+                    <th class="py-3 text-secondary text-uppercase" style="font-size: 0.8rem; font-weight: bold;">Courses Authored</th>
+                    <th class="py-3 text-secondary text-uppercase" style="font-size: 0.8rem; font-weight: bold;">Total Students</th>
+                    <th class="px-4 py-3 text-secondary text-uppercase text-end" style="font-size: 0.8rem; font-weight: bold;">Revenue Generated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for instructor in instructors %}
+                <tr>
+                    <td class="px-4 py-3 fw-bold align-middle">{{ instructor.username }}</td>
+                    <td class="py-3 align-middle">{{ instructor.course_count }}</td>
+                    <td class="py-3 align-middle">{{ instructor.total_students }}</td>
+                    <td class="px-4 py-3 align-middle text-success fw-bold text-end">₹{{ instructor.revenue_generated|default:"0.00" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">No instructors active.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

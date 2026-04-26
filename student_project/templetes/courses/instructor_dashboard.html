@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Instructor Panel - Google LMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <h2 style="font-weight: 500; color: #202124;">Instructor Dashboard</h2>
+    <a href="{% url 'courses:course_create' %}" class="btn btn-google">
+        Create New Course
+    </a>
+</div>
+
+<div class="card card-material">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th class="px-4 py-3 text-secondary" style="font-weight: 500;">Course Title</th>
+                        <th class="py-3 text-secondary" style="font-weight: 500;">Status</th>
+                        <th class="py-3 text-secondary" style="font-weight: 500;">Enrollments</th>
+                        <th class="py-3 text-secondary" style="font-weight: 500;">Revenue</th>
+                        <th class="px-4 py-3 text-secondary text-end" style="font-weight: 500;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td class="px-4 py-3 align-middle">
+                            <span class="text-dark fw-bold d-block">{{ course.title }}</span>
+                            <small class="text-muted">{{ course.category.name|default:"No Category" }}</small>
+                        </td>
+                        <td class="py-3 align-middle">
+                            {% if course.is_published %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success rounded-pill px-3">Published</span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary rounded-pill px-3">Draft</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 align-middle text-dark fw-bold">
+                            {{ course.enrollment_count|default:"0" }}
+                        </td>
+                        <td class="py-3 align-middle text-success fw-bold">
+                            ₹{{ course.total_revenue|default:"0.00" }}
+                        </td>
+                        <td class="px-4 py-3 align-middle text-end">
+                            <a href="{% url 'courses:lesson_create' course.slug %}" class="btn btn-sm btn-google-outline me-2">+ Chapter</a>
+                            <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-sm btn-outline-secondary">View Space</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <p class="text-muted mb-2">You haven't authored any courses yet.</p>
+                            <a href="{% url 'courses:course_create' %}" class="btn btn-google-outline btn-sm">Create your first course</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

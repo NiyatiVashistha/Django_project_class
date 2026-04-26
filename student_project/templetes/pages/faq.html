@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Frequently Asked Questions{% endblock %}
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-8">
+        <h2 class="text-center mb-5" style="color: #202124; font-weight: bold;">Frequently Asked Questions</h2>
+        
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item card-material border-0 mb-3 rounded overflow-hidden">
+                <h2 class="accordion-header">
+                    <button class="accordion-button bg-white text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne">
+                        How long do I have access to a course?
+                    </button>
+                </h2>
+                <div id="faqOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-secondary">
+                        Once enrolled, you have full access to the course content for exactly <strong>90 days</strong> (3 months). After this period, your enrollment expires to ensure you are continually engaging with updated material. You may securely repurchase access if needed.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item card-material border-0 mb-3 rounded overflow-hidden">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-white text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo">
+                        How do I reset my password?
+                    </button>
+                </h2>
+                <div id="faqTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-secondary">
+                        Simply navigate to the Sign In page and click the <strong>Forgot password?</strong> link. We will deliver a secure token to your registered email address allowing you to reset your credentials.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item card-material border-0 mb-3 rounded overflow-hidden">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-white text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree">
+                        Can I become an Instructor?
+                    </button>
+                </h2>
+                <div id="faqThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-secondary">
+                        Yes! Academic LMS allows registered users with the Instructor role to access a dedicated Dashboard where they can instantly create courses, author engaging chapters, and track their revenue in real-time. Contact an Administrator to upgrade your account role.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

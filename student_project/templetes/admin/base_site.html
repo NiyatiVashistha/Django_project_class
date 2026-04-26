@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | Academic LMS Administration{% endblock %}
+
+{% block extrastyle %}
+<style>
+/* Override default Django Admin styles with Google Material UX */
+#header {
+    background-color: #1a73e8 !important;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+#branding h1 {
+    color: #fff;
+    font-weight: 500;
+}
+.module h2, .module caption, .inline-group h2 {
+    background: #f8f9fa !important;
+    color: #202124 !important;
+    border-bottom: 2px solid #ea4335;
+}
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: #1a73e8;
+    border-radius: 4px;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+    background: #174ea6;
+}
+body {
+    background-color: #f8f9fa;
+    font-family: 'Roboto', 'Inter', sans-serif;
+}
+a {
+    color: #1a73e8;
+}
+a:hover {
+    color: #174ea6;
+}
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}" style="color:white; text-decoration: none;">Academic LMS Admin Station</a></h1>
+{% endblock %}

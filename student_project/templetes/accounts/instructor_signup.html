@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Become an Instructor - Academic LMS{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-sm-8 col-md-6 col-lg-5">
+        <div class="card card-material p-4 mt-5">
+            <h3 class="text-center mb-4" style="font-weight: 500; color: #ea4335;">Instructor Application</h3>
+            <p class="text-secondary text-center mb-4">Register as an Instructor to instantly begin authoring courses, designing chapters, and building an audience.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label" style="font-weight: 500; font-size: 0.9rem;">
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-google w-100 py-2 mt-3 fs-5">Apply as Instructor</button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <p class="text-secondary small">Already have an account? <a href="{% url 'accounts:login' %}" style="color: #1a73e8;" class="text-decoration-none fw-bold">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

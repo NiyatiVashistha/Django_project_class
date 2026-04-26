@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LMS{% endblock %}</title>
+
+    <meta name="description" content="An academic Django project for learning Model-View-Template architecture.">
+    <meta name="keywords" content="Django, LMS, Learning Management System, Academic, Programming">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    {% comment %}
+    EDUCATIONAL COMMENT:
+    This is a Django Template Tag. We use {% load static %} to load static files
+    from STATICFILES_DIRS.
+    {% endcomment %}
+    {% load static %}
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            /* Light grey Google workspace background */
+            color: #202124;
+            /* Google standard text color */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Material UI Style Navbar */
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
+            padding: 0.75rem 2rem;
+        }
+
+        .navbar-brand {
+            color: #5f6368;
+            font-weight: 500;
+            font-size: 1.5rem;
+            letter-spacing: 0.25px;
+        }
+
+        .nav-link {
+            color: #3c4043;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: #f1f3f4;
+            border-radius: 4px;
+        }
+
+        /* Essential Google UI button */
+        .btn-google {
+            background-color: #1a73e8;
+            color: white;
+            font-weight: 500;
+            border-radius: 4px;
+            padding: 8px 24px;
+            border: none;
+            text-transform: none;
+            letter-spacing: .25px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-google:hover {
+            background-color: #1b66c9;
+            color: white;
+            box-shadow: 0 1px 3px 0 rgba(60, 64, 67, .3), 0 4px 8px 3px rgba(60, 64, 67, .15);
+        }
+
+        .btn-google-outline {
+            color: #1a73e8;
+            background-color: transparent;
+            font-weight: 500;
+            border-radius: 4px;
+            padding: 8px 24px;
+            border: 1px solid #dadce0;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-google-outline:hover {
+            background-color: #f4f8fe;
+            border: 1px solid #d2e3fc;
+            color: #1a73e8;
+        }
+
+        /* Material Design Cards */
+        .card-material {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            box-shadow: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .card-material:hover {
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
+        }
+
+        /* Forms */
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid #dadce0;
+        }
+
+        .form-control:focus {
+            border-color: #1a73e8;
+            box-shadow: inset 0 0 0 1px #1a73e8;
+        }
+
+        main {
+            flex: 1;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        footer {
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            color: #5f6368;
+            padding: 1.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'landing' %}">
+                <span style="color: #1a73e8; font-weight: bold; font-size: 1.5rem;">Academic LMS</span>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navItems">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navItems">
+                <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:course_list' %}">Browse
+                            Courses</a></li>
+
+                    {% comment %}
+                    EDUCATIONAL COMMENT:
+                    Here we check `request.user.is_authenticated` to conditionally
+                    render UI elements for logged-in users vs guests!
+                    {% endcomment %}
+
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.role == 'admin' %}
+                            <li class="nav-item"><a class="nav-link px-3 fw-bold" style="color: #34a853;" href="{% url 'courses:admin_analytics' %}">Admin Studio</a></li>
+                        {% endif %}
+                        {% if request.user.is_instructor %}
+                            <li class="nav-item"><a class="nav-link px-3 fw-bold" style="color: #ea4335;" href="{% url 'courses:instructor_dashboard' %}">Instructor Dashboard</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:dashboard' %}">My Learning</a></li>
+                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:faq' %}">FAQ</a></li>
+                        <li class="nav-item">
+                        <a class="btn btn-google-outline ms-2" href="{% url 'accounts:logout' %}">Sign out</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'accounts:login' %}">Sign in</a></li>
+                    <li class="nav-item"><a class="btn btn-google ms-2" href="{% url 'accounts:register' %}">Create
+                            account</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% comment %}
+        EDUCATIONAL COMMENT:
+        The messages framework displays one-time notifications from redirecting views.
+        {% endcomment %}
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show shadow-sm"
+                role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-4 mt-auto">
+        <div class="mb-2">
+            <a href="{% url 'accounts:instructor_signup' %}" class="text-decoration-none text-light fw-bold" style="color:#fbbc04 !important;">Become an Instructor</a> | 
+            <a href="{% url 'courses:faq' %}" class="text-decoration-none text-light">FAQ</a>
+        </div>
+        <p class="mb-0 text-secondary">&copy; {% now "Y" %} Academic Django Project - Designed explicitly for clarity.</p>
+    </footer>
+
+    <!-- GLOBAL FLOATING CHATBOT -->
+    <div id="chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1050; display: flex; flex-direction: column; align-items: flex-end;">
+        <div id="chat-window" class="card shadow-lg mb-3" style="width: 320px; height: 400px; display: none; overflow: hidden; border: none; border-radius: 12px;">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">Academic Assistant</h6>
+                <button id="close-chat" class="btn-close btn-close-white" style="font-size: 0.8rem;"></button>
+            </div>
+            <div id="chat-messages" class="card-body" style="background-color: #f8f9fa; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                <div class="bg-white p-2 text-dark rounded shadow-sm border align-self-start" style="max-width: 85%; font-size: 0.9rem;">
+                    Hello! I can help you find courses or answer basic questions. What are you looking for?
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top p-2">
+                <div class="input-group">
+                    <input type="text" id="chat-input" class="form-control form-control-sm border-end-0" placeholder="Type or use voice..." style="font-size: 0.9rem;">
+                    <!-- VOICE SEARCH -->
+                    <button class="btn btn-outline-secondary border-start-0 border px-3 fw-bold" type="button" id="voice-btn" style="background-color: transparent;">
+                        MIC
+                    </button>
+                    <!-- SEND TEXT -->
+                    <button class="btn btn-primary px-3 fw-bold" type="button" id="send-btn">
+                        SEND
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <button id="chat-toggle" class="btn btn-primary rounded-circle shadow-lg text-white font-weight-bold" style="width: 65px; height: 65px; font-size: 1.1rem; display: flex; justify-content: center; align-items: center; border: none;">
+            Chat
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatWindow = document.getElementById('chat-window');
+        const closeChat = document.getElementById('close-chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const voiceBtn = document.getElementById('voice-btn');
+
+        chatToggle.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
+        });
+
+        closeChat.addEventListener('click', () => {
+            chatWindow.style.display = 'none';
+        });
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function addMessage(text, isUser) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = isUser 
+                ? "bg-primary text-white p-2 mb-1 rounded shadow-sm align-self-end mt-1" 
+                : "bg-white p-2 mb-1 text-dark rounded shadow-sm border align-self-start mt-1";
+            msgDiv.style.maxWidth = "85%";
+            msgDiv.style.fontSize = "0.9rem";
+            
+            // Basic support for **bolding** since the bot sends it
+            if (!isUser && text) {
+                const processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                msgDiv.innerHTML = processed;
+            } else {
+                msgDiv.textContent = text || "...";
+            }
+            
+            if (text === "...") msgDiv.id = "bot-loading";
+            
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return msgDiv;
+        }
+
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && this.value.trim() !== '') {
+                sendMessage(this.value.trim());
+            }
+        });
+
+        sendBtn.addEventListener('click', function() {
+            if (chatInput.value.trim() !== '') {
+                sendMessage(chatInput.value.trim());
+            }
+        });
+
+        function sendMessage(text) {
+            addMessage(text, true);
+            chatInput.value = '';
+            
+            // Show loading bubble
+            const loadingBubble = addMessage("...", false);
+            
+            fetch('/courses/api/chat/', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message: text })
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error("Server error " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                loadingBubble.remove();
+                addMessage(data.response || "No response field in data.", false);
+            })
+            .catch(error => {
+                loadingBubble.remove();
+                addMessage("Error: " + error.message + ". Please ensure database is up and server is running.", false);
+            });
+        }
+
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            voiceBtn.addEventListener('click', () => {
+                voiceBtn.style.backgroundColor = '#ea4335';
+                voiceBtn.style.color = 'white';
+                voiceBtn.textContent = 'REC';
+                recognition.start();
+            });
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                voiceBtn.style.backgroundColor = 'transparent';
+                voiceBtn.style.color = '#6c757d';
+                voiceBtn.textContent = 'MIC';
+                sendMessage(transcript);
+            };
+            
+            recognition.onerror = function() {
+                voiceBtn.style.backgroundColor = 'transparent';
+                voiceBtn.style.color = '#6c757d';
+                voiceBtn.textContent = 'MIC';
+            };
+        } else {
+            voiceBtn.style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

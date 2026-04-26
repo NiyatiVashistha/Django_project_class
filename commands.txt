@@ -1,0 +1,20 @@
+# IMPORTANT TERMINAL COMMANDS FOR DJANGO LMS
+
+# 1. Run the local development server (View your website)
+python manage.py runserver
+
+# 2. Make and apply database migrations (When you change models.py)
+python manage.py makemigrations
+python manage.py migrate
+
+# 3. Create a Superuser (An Admin account to access /admin portal)
+python manage.py createsuperuser
+
+# 4. Open the interactive Django Shell (Run Python code directly tied to your DB)
+python manage.py shell
+
+# 5. Seed the Database with dummy courses (Using the custom script we built)
+python manage.py seed_db
+
+# 6. Check for syntax and configuration errors across the Django project
+python manage.py check

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Checkout - {{ course.title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card card-material p-4 p-md-5">
+            <h2 class="mb-4" style="font-weight: 500; color: #202124;">Checkout</h2>
+            <hr class="text-muted border-2 opacity-25">
+            
+            <div class="d-flex justify-content-between mb-3 text-dark">
+                <span style="font-size: 1.15rem; font-weight: 500;">{{ course.title }}</span>
+                <span class="fw-bold" style="font-size: 1.15rem;">₹{{ payment.amount }}</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-4 text-secondary">
+                <span>Tax (included)</span>
+                <span>₹0.00</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4 pt-3 border-top mb-5" style="border-top-color: #dadce0 !important;">
+                <span class="fw-bold" style="font-size: 1.25rem; color: #202124;">Total</span>
+                <span class="fw-bold" style="font-size: 1.25rem; color: #202124;">₹{{ payment.amount }}</span>
+            </div>
+            
+            {% comment %}
+              EDUCATIONAL COMMENT:
+              This calls the payment_view POST handler which interacts with the Stripe API 
+              in courses/services.py to generate a secure checkout URL.
+            {% endcomment %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-google w-100 py-3 fs-5">Proceed to secure payment</button>
+            </form>
+            
+            <p class="text-center mt-4 small text-secondary">
+                Secure checkout provided by Stripe infrastructure.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
