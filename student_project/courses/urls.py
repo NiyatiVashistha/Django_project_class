@@ -12,13 +12,9 @@ urlpatterns = [
     path("course/<slug:slug>/payment/", views.payment_view, name="payment"),
     path("course/<slug:slug>/payment/success/", views.payment_success_view, name="payment_success"),
     
-    # Instructor Routes
-    path("instructor/dashboard/", views.instructor_dashboard_view, name="instructor_dashboard"),
-    path("instructor/course/add/", views.course_create_view, name="course_create"),
-    path("instructor/course/<slug:slug>/add-lesson/", views.lesson_create_view, name="lesson_create"),
-    
     # Admin & Pages Routes
     path("admin/analytics/", views.admin_analytics_view, name="admin_analytics"),
     path("faq/", views.faq_view, name="faq"),
+    path("contact/", views.contact_view, name="contact"),
     path("api/chat/", views.chat_api_view, name="chat_api"),
 ]

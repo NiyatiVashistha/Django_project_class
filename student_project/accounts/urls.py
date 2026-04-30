@@ -9,6 +9,7 @@ urlpatterns = [
     path("instructor/signup/", views.instructor_signup_view, name="instructor_signup"),
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
+    path("otp-verify/", views.otp_verify_view, name="otp_verify"),
     
     # Password Reset Features
     path("password_reset/", auth_views.PasswordResetView.as_view(

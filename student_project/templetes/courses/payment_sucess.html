@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Payment success{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Payment successful</h1>
+  <p class="muted">Your payment has been confirmed.</p>
+  <a href="{% url 'courses:learn' course.slug %}" class="button button-primary">Start learning</a>
+</div>
+{% endblock %}

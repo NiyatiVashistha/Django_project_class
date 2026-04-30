@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
     'courses.apps.CoursesConfig',
+    'instructor.apps.InstructorConfig',
 ]
 
 
@@ -129,6 +130,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'courses:dashboard'
+LOGOUT_REDIRECT_URL = 'landing'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -148,6 +150,7 @@ CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = 'DENY'       
 # Mitigate MIME type sniffing
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 
 # In production with HTTPS, these MUST be set to True:
 SESSION_COOKIE_SECURE = False  

@@ -51,8 +51,28 @@ def admin_required(view_func):
 # ──────────────────────────────────────────────
 
 def landing_view(request):
-    courses = Course.objects.filter(is_published=True).order_by("-created_at")[:9]
-    return render(request, "landing.html", {"courses": courses})
+    from accounts.models import User
+    from django.db.models import Count
+    
+    # New Courses (latest created)
+    new_courses = Course.objects.filter(is_published=True).order_by("-created_at")[:4]
+    
+    # Popular Courses (most enrollments)
+    popular_courses = Course.objects.filter(is_published=True).annotate(
+        enroll_count=Count('enrollments')
+    ).order_by('-enroll_count')[:4]
+    
+    # Trending Now (randomized/engagement based)
+    trending_courses = Course.objects.filter(is_published=True).order_by('?')[:4]
+    
+    top_instructors = User.objects.filter(role=User.Role.INSTRUCTOR)[:4]
+    
+    return render(request, "landing.html", {
+        "new_courses": new_courses,
+        "popular_courses": popular_courses,
+        "trending_courses": trending_courses,
+        "top_instructors": top_instructors
+    })
 
 
 def course_list_view(request):
@@ -89,11 +109,13 @@ def course_list_view(request):
 
 
 def course_detail_view(request, slug):
-    course = get_object_or_404(
-        Course.objects.select_related("instructor", "category"),
-        slug=slug,
-        is_published=True,
-    )
+    course = get_object_or_404(Course.objects.select_related("instructor", "category"), slug=slug)
+    
+    # Allow viewing if published OR if the user is the instructor
+    if not course.is_published:
+        if not request.user.is_authenticated or (course.instructor != request.user and request.user.role != 'admin'):
+            messages.error(request, "This course is currently in draft mode.")
+            return redirect("courses:course_list")
 
     lessons = course.lessons.all().order_by("order")
     enrolled = request.user.is_authenticated and is_enrolled(request.user, course)
@@ -174,8 +196,9 @@ def payment_success_view(request, slug):
 
 @login_required
 def learn_view(request, slug):
-    course = get_object_or_404(Course, slug=slug, is_published=True)
-
+    course = get_object_or_404(Course, slug=slug)
+    
+    # Security: Check enrollment
     try:
         enrollment = Enrollment.objects.get(
             student=request.user,
@@ -183,26 +206,32 @@ def learn_view(request, slug):
             status__in=[Enrollment.Status.ACTIVE, Enrollment.Status.COMPLETED],
         )
     except Enrollment.DoesNotExist:
+        messages.error(request, "You must be enrolled to access this course.")
         return redirect("courses:course_detail", slug=slug)
 
+    # Payment Check
     if not course.is_free:
         try:
-            if enrollment.payment.status != Payment.Status.COMPLETED:
+            if not enrollment.payment.is_completed:
                 return redirect("courses:payment", slug=slug)
         except Payment.DoesNotExist:
             return redirect("courses:payment", slug=slug)
 
     lessons = course.lessons.all().order_by("order")
-
-    # BUG FIX: wrapped in try/except so MongoDB being offline never breaks the learn page
-    try:
-        log_course_activity(request.user.id, request.path, {"course_id": course.id})
-    except Exception:
-        pass
+    
+    # Handle specific lesson selection
+    lesson_id = request.GET.get("lesson")
+    current_lesson = None
+    if lesson_id:
+        current_lesson = lessons.filter(id=lesson_id).first()
+    
+    if not current_lesson:
+        current_lesson = lessons.first()
 
     return render(request, "courses/learn.html", {
         "course": course,
         "lessons": lessons,
+        "current_lesson": current_lesson,
     })
 
 
@@ -217,63 +246,6 @@ def dashboard_view(request):
 
 
 # ──────────────────────────────────────────────
-# Instructor Views
-# ──────────────────────────────────────────────
-
-@login_required
-@instructor_required
-def instructor_dashboard_view(request):
-    courses = Course.objects.filter(instructor=request.user).annotate(
-        enrollment_count=Count('enrollments'),
-        total_revenue=Sum(
-            'enrollments__payment__amount',
-            filter=Q(enrollments__payment__status=Payment.Status.COMPLETED)
-        )
-    )
-    return render(request, "courses/instructor_dashboard.html", {"courses": courses})
-
-
-@login_required
-@instructor_required
-def course_create_view(request):
-    from courses.forms import CourseForm
-    if request.method == "POST":
-        form = CourseForm(request.POST, request.FILES)
-        if form.is_valid():
-            course = form.save(commit=False)
-            course.instructor = request.user
-            course.save()
-            messages.success(request, "Course successfully created!")
-            return redirect("courses:instructor_dashboard")
-    else:
-        form = CourseForm()
-    return render(request, "courses/course_form.html", {"form": form})
-
-
-@login_required
-@instructor_required
-def lesson_create_view(request, slug):
-    from courses.forms import LessonForm
-    course = get_object_or_404(Course, slug=slug, instructor=request.user)
-
-    if request.method == "POST":
-        form = LessonForm(request.POST)
-        if form.is_valid():
-            lesson = form.save(commit=False)
-            lesson.course = course
-            if Lesson.objects.filter(course=course, order=lesson.order).exists():
-                messages.error(request, f"Chapter {lesson.order} already exists for this course!")
-            else:
-                lesson.save()
-                messages.success(request, "Chapter successfully added to course!")
-                return redirect("courses:instructor_dashboard")
-    else:
-        next_order = course.lessons.count() + 1
-        form = LessonForm(initial={"order": next_order})
-
-    return render(request, "courses/lesson_form.html", {"form": form, "course": course})
-
-
 # ──────────────────────────────────────────────
 # Admin Analytics
 # ──────────────────────────────────────────────
@@ -312,6 +284,13 @@ def admin_analytics_view(request):
 
 def faq_view(request):
     return render(request, "pages/faq.html")
+
+def contact_view(request):
+    if request.method == "POST":
+        # Process contact form (dummy for now)
+        messages.success(request, "Thank you for contacting us! We will get back to you shortly.")
+        return redirect("courses:contact")
+    return render(request, "pages/contact.html")
 
 
 # ──────────────────────────────────────────────

@@ -1,45 +1,157 @@
 {% extends 'base.html' %}
-{% block title %}Welcome - Platform{% endblock %}
+{% block title %}Academic LMS - Learn Without Limits{% endblock %}
+
 {% block content %}
-
-{% comment %}
-  EDUCATIONAL COMMENT:
-  Because we used {% extends 'base.html' %}, this block seamlessly swaps
-  out the empty block inside base.html
-{% endcomment %}
-
-<div class="text-center py-5 mb-5 rounded-4" style="background-color: #e8f0fe; border: 1px solid #d2e3fc;">
-    <h1 class="display-4 fw-bold" style="color: #1a73e8;">Learn Django Effectively</h1>
-    <p class="lead text-secondary mx-auto mt-3" style="max-width: 600px;">A clean, professionally designed educational LMS project to teach you Model-View-Template architecture inside out!</p>
-    <a href="{% url 'courses:course_list' %}" class="btn btn-google btn-lg mt-3">Explore All Courses</a>
+<!-- Hero Search Section -->
+<div class="py-5 mb-5 text-center text-white rounded-5 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #0056d2 0%, #002d72 100%); min-height: 450px; display: flex; align-items: center;">
+    <div class="container position-relative z-1">
+        <h1 class="display-3 fw-bold mb-3">Learn Without Limits</h1>
+        <p class="lead mb-5 opacity-75">Start, switch, or advance your career with more than 5,000 courses, Professional Certificates, and degrees from world-class universities and companies.</p>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <form action="{% url 'courses:course_list' %}" method="get" class="d-flex shadow-lg rounded-pill bg-white p-2">
+                    <input type="text" name="q" class="form-control border-0 rounded-pill ps-4" placeholder="What do you want to learn today?" style="font-size: 1.1rem; box-shadow: none;">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 ms-2 fw-bold">Search</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Decorative Circle -->
+    <div class="position-absolute bg-white opacity-10 rounded-circle" style="width: 400px; height: 400px; bottom: -100px; right: -100px;"></div>
 </div>
 
-<h3 class="mb-4 text-dark" style="font-weight: 500;">Featured Courses</h3>
-<div class="row g-4">
-    {% comment %}
-      EDUCATIONAL COMMENT:
-      Iterating over a Python QuerySet using a Django Template for loop!
-    {% endcomment %}
-    {% for course in courses %}
-        <div class="col-md-4">
-            <div class="card card-material h-100 p-3">
-                <div class="card-body px-2 py-1">
-                    <h5 class="card-title text-dark">{{ course.title }}</h5>
-                    <p class="card-text text-secondary mt-3" style="font-size: 0.95rem;">{{ course.description|truncatewords:20 }}</p>
+<div class="container">
+    <!-- Popular Courses Section -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Most Popular</h2>
+            <a href="{% url 'courses:course_list' %}?sort_by=popular" class="btn btn-link text-primary fw-bold text-decoration-none">Explore All</a>
+        </div>
+        <div class="row g-4">
+            {% for course in popular_courses %}
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm transition-card">
+                    {% if course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" class="card-img-top rounded-top" alt="{{ course.title }}" style="height: 160px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light rounded-top d-flex align-items-center justify-content-center" style="height: 160px;">
+                        <i class="bi bi-book text-muted opacity-25" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body p-3">
+                        <small class="text-primary fw-bold text-uppercase" style="font-size: 0.7rem;">{{ course.category.name|default:"General" }}</small>
+                        <h6 class="card-title fw-bold mt-1 mb-2">{{ course.title }}</h6>
+                        <p class="text-muted small mb-0">By {{ course.instructor.username }}</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark">{% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}</span>
+                            <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">View</a>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer bg-white border-0 px-2 pb-1 pt-3 mt-auto">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-dark fw-bold">{% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}</span>
-                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-google-outline btn-sm">Details</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- New Courses Section -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">New Courses</h2>
+            <a href="{% url 'courses:course_list' %}?sort_by=new" class="btn btn-link text-primary fw-bold text-decoration-none">Check Newest</a>
+        </div>
+        <div class="row g-4">
+            {% for course in new_courses %}
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm transition-card">
+                    {% if course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" class="card-img-top rounded-top" alt="{{ course.title }}" style="height: 160px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light rounded-top d-flex align-items-center justify-content-center" style="height: 160px;">
+                        <i class="bi bi-star text-muted opacity-25" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body p-3">
+                        <small class="text-success fw-bold text-uppercase" style="font-size: 0.7rem;">JUST ADDED</small>
+                        <h6 class="card-title fw-bold mt-1 mb-2">{{ course.title }}</h6>
+                    </div>
+                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-primary btn-sm rounded-pill w-100">Enroll Now</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Trending Now Section -->
+    <div class="mb-5 bg-light p-5 rounded-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Trending Now</h2>
+            <span class="badge bg-danger rounded-pill px-3">TRENDING</span>
+        </div>
+        <div class="row g-4">
+            {% for course in trending_courses %}
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-lg transition-card">
+                    <div class="card-body p-4 text-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="bi bi-graph-up-arrow text-primary"></i>
+                        </div>
+                        <h6 class="fw-bold">{{ course.title }}</h6>
+                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-link text-decoration-none small">Join the trend &rarr;</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- FAQ Section (Keep existing but polish) -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold text-center mb-5">Frequently Asked Questions</h2>
+            <div class="accordion accordion-flush" id="faqAccordion">
+                <div class="accordion-item bg-transparent border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-bold py-4 bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#f1">
+                            How do I start a course?
+                        </button>
+                    </h2>
+                    <div id="f1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            Simply sign up, choose a course, and click enroll. You can start learning immediately!
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item bg-transparent border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-bold py-4 bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#f2">
+                            Can I access courses on mobile?
+                        </button>
+                    </h2>
+                    <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            Yes! Our platform is fully responsive and works perfectly on smartphones and tablets.
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    {% empty %}
-        <div class="col-12">
-            <p class="text-muted">No published courses available right now.</p>
-        </div>
-    {% endfor %}
+    </div>
 </div>
 
+<style>
+.transition-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.transition-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 1rem 3rem rgba(0,0,0,0.1) !important;
+}
+</style>
 {% endblock %}

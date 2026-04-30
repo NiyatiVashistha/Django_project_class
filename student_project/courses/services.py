@@ -2,8 +2,8 @@ from decimal import Decimal
 
 import stripe
 from django.conf import settings
-from django.db import IntegrityError, transaction
 from django.core.paginator import Paginator
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Sum, Q
 from django.urls import reverse
 from django.utils import timezone
@@ -12,10 +12,13 @@ from accounts.mongo import log_search, log_activity, log_payment
 from courses.models import Course, Enrollment, Payment
 
 
-def search_courses(query, sort_by=None, category_id=None, user=None, page=1, per_page=9):
+def search_courses(query, user=None, page=1, per_page=9, sort_by="", category_id=None):
     queryset = Course.objects.filter(is_published=True).select_related(
         "instructor", "category"
     ).annotate(enrollment_count=Count("enrollments"))
+
+    if category_id:
+        queryset = queryset.filter(category_id=category_id)
 
     if query:
         queryset = queryset.filter(
@@ -31,20 +34,14 @@ def search_courses(query, sort_by=None, category_id=None, user=None, page=1, per
             except Exception:
                 pass
 
-    if category_id:
-        queryset = queryset.filter(category_id=category_id)
-
-    if sort_by == 'popular':
-        queryset = queryset.order_by('-enrollment_count', '-created_at')
-    elif sort_by == 'free':
-        queryset = queryset.filter(price=0).order_by('-created_at')
-    elif sort_by == 'created_at':
-        queryset = queryset.order_by('created_at')
-    elif sort_by == 'newest':
-        queryset = queryset.order_by('-created_at')
+    if sort_by == "price_low":
+        queryset = queryset.order_by("price")
+    elif sort_by == "price_high":
+        queryset = queryset.order_by("-price")
+    elif sort_by == "newest":
+        queryset = queryset.order_by("-created_at")
     else:
-        # Default: newest first
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by("-created_at")
 
     paginator = Paginator(queryset, per_page)
     page_obj = paginator.get_page(page)
@@ -52,27 +49,15 @@ def search_courses(query, sort_by=None, category_id=None, user=None, page=1, per
 
 
 def is_enrolled(student, course):
-    enrollments = Enrollment.objects.filter(
+    return Enrollment.objects.filter(
         student=student,
         course=course,
         status__in=[Enrollment.Status.ACTIVE, Enrollment.Status.COMPLETED],
-    )
-    # If they hold an enrollment but it's expired, they are NOT enrolled.
-    for e in enrollments:
-        if not e.is_expired:
-            return True
-    return False
+    ).exists()
 
 
 @transaction.atomic
 def enroll_student(student, course):
-    # EXPIRY REPURCHASING MECHANIC
-    # Cleanse any expired enrollments so the unique constraint drops and they can buy again.
-    expired = Enrollment.objects.filter(student=student, course=course)
-    for e in expired:
-        if e.is_expired:
-            e.delete()
-
     try:
         enrollment, created = Enrollment.objects.get_or_create(
             student=student,
@@ -81,7 +66,7 @@ def enroll_student(student, course):
         )
         return enrollment, created
     except IntegrityError:
-        enrollment = Enrollment.objects.get(student=student, course=course)
+        enrollment = Enrollment.objects.select_for_update().get(student=student, course=course)
         return enrollment, False
 
 
@@ -145,9 +130,9 @@ def finalize_stripe_payment(session_id):
     if session.payment_status != "paid":
         return None
 
-    payment = Payment.objects.get(gateway_order_id=session_id)
+    payment = Payment.objects.select_for_update().get(gateway_order_id=session_id)
 
-    if payment.is_completed:
+    if payment.status == Payment.Status.COMPLETED:
         return payment
 
     payment.status = Payment.Status.COMPLETED
@@ -170,6 +155,7 @@ def finalize_stripe_payment(session_id):
         )
     except Exception:
         pass
+
     return payment
 
 
@@ -196,4 +182,7 @@ def get_student_dashboard_data(student):
 
 
 def log_course_activity(user_id, path, meta=None):
-    log_activity(user_id, path, meta or {})
+    try:
+        log_activity(user_id, path, meta or {})
+    except Exception:
+        pass

@@ -23,7 +23,10 @@
           We conditionally show the Enroll/Learn button based on the `enrolled` 
           context variable passed by the view!
         {% endcomment %}
-        {% if enrolled %}
+        {% if request.user == course.instructor %}
+            <p class="text-primary fw-bold mb-4">This is your course.</p>
+            <a href="{% url 'instructor:course_edit' course.slug %}" class="btn btn-primary btn-lg px-4 shadow">Manage & Edit Course</a>
+        {% elif enrolled %}
             <p class="text-success fw-bold mb-4">You are enrolled in this course.</p>
             <a href="{% url 'courses:learn' course.slug %}" class="btn btn-google btn-lg px-4">Go to Course Material</a>
         {% else %}

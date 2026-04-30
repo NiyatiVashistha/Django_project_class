@@ -8,7 +8,9 @@ urlpatterns = [
     path("", landing_view, name="landing"),          # Landing page
     path("admin/", admin.site.urls),                 # Admin panel
     path("accounts/", include("accounts.urls")),     # Auth system
+    path("accounts/", include("django.contrib.auth.urls")), # Built-in auth (password reset fix)
     path("courses/", include("courses.urls")),       # Course system
+    path("instructor/", include("instructor.urls")), # Instructor system
 ]
 
 # Media files (for development only)

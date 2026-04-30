@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-
+import random
+from datetime import timedelta
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
@@ -80,3 +81,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_instructor(self):
         return self.role == self.Role.INSTRUCTOR
+
+
+class OTPVerification(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='otp_verification')
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def generate_otp(self):
+        self.otp_code = str(random.randint(100000, 999999))
+        self.created_at = timezone.now()
+        self.is_verified = False
+        self.save()
+
+    def is_valid(self):
+        return timezone.now() < self.created_at + timedelta(minutes=10) and not self.is_verified

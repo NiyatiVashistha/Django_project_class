@@ -7,10 +7,16 @@ User = get_user_model()
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
+    role = forms.ChoiceField(
+        choices=[(User.Role.STUDENT, 'Student'), (User.Role.INSTRUCTOR, 'Instructor')],
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        initial=User.Role.STUDENT,
+        help_text="Choose how you want to join our platform."
+    )
 
     class Meta:
         model = User
-        fields = ("username", "email")
+        fields = ("username", "email", "role")
 
 
 class LoginForm(forms.Form):
@@ -46,3 +52,7 @@ class InstructorSignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class OTPForm(forms.Form):
+    otp_code = forms.CharField(max_length=6, widget=forms.TextInput(attrs={"class": "form-control p-2", "placeholder": "Enter 6-digit OTP"}))

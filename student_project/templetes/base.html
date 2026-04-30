@@ -150,31 +150,28 @@
 
             <div class="collapse navbar-collapse justify-content-end" id="navItems">
                 <ul class="navbar-nav align-items-center gap-3">
-                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:course_list' %}">Browse
-                            Courses</a></li>
-
-                    {% comment %}
-                    EDUCATIONAL COMMENT:
-                    Here we check `request.user.is_authenticated` to conditionally
-                    render UI elements for logged-in users vs guests!
-                    {% endcomment %}
-
                     {% if request.user.is_authenticated %}
+                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:course_list' %}">Browse</a></li>
+                        
                         {% if request.user.role == 'admin' %}
-                            <li class="nav-item"><a class="nav-link px-3 fw-bold" style="color: #34a853;" href="{% url 'courses:admin_analytics' %}">Admin Studio</a></li>
+                            <li class="nav-item"><a class="nav-link px-3 fw-bold text-success" href="{% url 'courses:admin_analytics' %}">Admin Studio</a></li>
                         {% endif %}
+
                         {% if request.user.is_instructor %}
-                            <li class="nav-item"><a class="nav-link px-3 fw-bold" style="color: #ea4335;" href="{% url 'courses:instructor_dashboard' %}">Instructor Dashboard</a></li>
+                            <li class="nav-item border-end pe-2"><a class="nav-link px-3 fw-bold text-danger" href="{% url 'instructor:dashboard' %}">Instructor Studio</a></li>
+                            <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:dashboard' %}">My Learning</a></li>
+                        {% else %}
+                            <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:dashboard' %}">My Learning</a></li>
+                            <li class="nav-item"><a class="nav-link px-3 fw-bold text-primary" href="{% url 'accounts:instructor_signup' %}">Teach on Academic</a></li>
                         {% endif %}
-                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:dashboard' %}">My Learning</a></li>
-                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:faq' %}">FAQ</a></li>
+
+                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:contact' %}">Contact</a></li>
                         <li class="nav-item">
-                        <a class="btn btn-google-outline ms-2" href="{% url 'accounts:logout' %}">Sign out</a>
+                        <a class="btn btn-google-outline ms-2" href="{% url 'accounts:logout' %}">Sign Out</a>
                     </li>
                     {% else %}
-                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'accounts:login' %}">Sign in</a></li>
-                    <li class="nav-item"><a class="btn btn-google ms-2" href="{% url 'accounts:register' %}">Create
-                            account</a></li>
+                        <li class="nav-item"><a class="nav-link px-3" href="{% url 'accounts:login' %}">Log In</a></li>
+                        <li class="nav-item"><a class="btn btn-google ms-2" href="{% url 'accounts:register' %}">Sign Up</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -213,6 +210,7 @@
 
     <!-- GLOBAL FLOATING CHATBOT -->
     <div id="chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1050; display: flex; flex-direction: column; align-items: flex-end;">
+        {% csrf_token %}
         <div id="chat-window" class="card shadow-lg mb-3" style="width: 320px; height: 400px; display: none; overflow: hidden; border: none; border-radius: 12px;">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
                 <h6 class="mb-0 fw-bold">Academic Assistant</h6>
@@ -262,19 +260,9 @@
             chatWindow.style.display = 'none';
         });
         
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
+        function getCsrfToken() {
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfInput ? csrfInput.value : '';
         }
 
         function addMessage(text, isUser) {
@@ -323,7 +311,7 @@
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({ message: text })
             })
@@ -373,6 +361,7 @@
             voiceBtn.style.display = 'none';
         }
     </script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

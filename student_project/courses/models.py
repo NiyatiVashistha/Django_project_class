@@ -94,6 +94,9 @@ class Lesson(models.Model):
     )
     title = models.CharField(max_length=255)
     content = models.TextField()
+    video_url = models.URLField(blank=True, null=True, help_text="YouTube or Vimeo URL")
+    video_file = models.FileField(upload_to="lesson_videos/", blank=True, null=True)
+    notes_file = models.FileField(upload_to="lesson_notes/", blank=True, null=True)
     order = models.PositiveIntegerField(default=1)
     duration_minutes = models.PositiveIntegerField(default=0)
     is_preview = models.BooleanField(default=False)
@@ -110,6 +113,48 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.course.title} - Lesson {self.order}: {self.title}"
+
+
+class Quiz(models.Model):
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name="quiz")
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    passing_score = models.PositiveIntegerField(default=70)
+
+    def __str__(self):
+        return f"Quiz: {self.title} ({self.lesson.title})"
+
+
+class Question(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions")
+    text = models.TextField()
+    order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.text
+
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choices")
+    text = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text
+
+
+class QuizAttempt(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    score = models.PositiveIntegerField()
+    passed = models.BooleanField()
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.username} - {self.quiz.title} ({self.score}%)"
 
 
 class Enrollment(models.Model):

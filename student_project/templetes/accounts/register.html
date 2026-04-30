@@ -24,7 +24,18 @@
                     <div class="mb-3">
                         <label for="{{ field.id_for_label }}" class="form-label" style="font-weight: 500; font-size: 0.9rem;">{{ field.label }}</label>
                         
-                        {% if 'password' in field.name|lower %}
+                        {% if field.name == 'role' %}
+                            <div class="bg-light p-3 rounded-3 d-flex justify-content-around mt-1">
+                                {% for radio in field %}
+                                    <div class="form-check">
+                                        {{ radio.tag }}
+                                        <label class="form-check-label fw-bold" for="{{ radio.id_for_label }}">
+                                            {{ radio.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% elif 'password' in field.name|lower %}
                             <div class="input-group">
                                 <input type="password" name="{{ field.name }}" class="form-control p-2" id="{{ field.id_for_label }}" {% if field.field.required %}required{% endif %}>
                                 <button class="btn btn-outline-secondary px-3 toggle-password-btn" type="button" data-target="{{ field.id_for_label }}" style="font-size: 0.9rem; font-weight: 500;">Show</button>
