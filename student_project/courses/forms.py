@@ -6,10 +6,32 @@ class SearchForm(forms.Form):
         required=False,
         label="Search",
         widget=forms.TextInput(attrs={
-            "class": "search-input",
-            "placeholder": "Search courses...",
+            "class": "form-control",
+            "placeholder": "What do you want to learn?",
         }),
     )
+    category = forms.ModelChoiceField(
+        queryset=None, # Will set in __init__
+        required=False,
+        empty_label="All Categories",
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+    sort = forms.ChoiceField(
+        choices=[
+            ("", "Sort By"),
+            ("newest", "Newest"),
+            ("popular", "Most Popular"),
+            ("price_low", "Price: Low to High"),
+            ("price_high", "Price: High to Low"),
+        ],
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from courses.models import Category
+        self.fields['category'].queryset = Category.objects.all()
 
 
 class PaymentForm(forms.Form):

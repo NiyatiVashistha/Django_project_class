@@ -40,6 +40,8 @@ def search_courses(query, user=None, page=1, per_page=9, sort_by="", category_id
         queryset = queryset.order_by("-price")
     elif sort_by == "newest":
         queryset = queryset.order_by("-created_at")
+    elif sort_by == "popular":
+        queryset = queryset.order_by("-enrollment_count")
     else:
         queryset = queryset.order_by("-created_at")
 

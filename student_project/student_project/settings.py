@@ -145,12 +145,17 @@ STRIPE_CURRENCY = os.getenv("STRIPE_CURRENCY", "inr")
 # SECURITY & NETWORK PROTOCOLS (Enterprise Standard)
 # Mitigate Cross-Site Scripting (XSS)
 SESSION_COOKIE_HTTPONLY = True 
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 # Prevent site from being framed (Clickjacking mitigation)
 X_FRAME_OPTIONS = 'DENY'       
 # Mitigate MIME type sniffing
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
 
 # In production with HTTPS, these MUST be set to True:
 SESSION_COOKIE_SECURE = False  

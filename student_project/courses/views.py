@@ -94,10 +94,10 @@ def course_list_view(request):
 
     page_obj, paginator = search_courses(
         query=query,
-        sort_by=sort_by,
-        category_id=category_id,
         user=request.user,
         page=page_number,
+        sort_by=sort_by,
+        category_id=category_id,
     )
 
     return render(request, "courses/course_list.html", {
@@ -285,6 +285,28 @@ def admin_analytics_view(request):
 def faq_view(request):
     return render(request, "pages/faq.html")
 
+def sitemap_view(request):
+    from django.http import HttpResponse
+    from django.urls import reverse
+    
+    courses = Course.objects.filter(is_published=True)
+    urls = [
+        request.build_absolute_uri(reverse('landing')),
+        request.build_absolute_uri(reverse('courses:course_list')),
+        request.build_absolute_uri(reverse('courses:faq')),
+        request.build_absolute_uri(reverse('courses:contact')),
+    ]
+    
+    for course in courses:
+        urls.append(request.build_absolute_uri(reverse('courses:course_detail', kwargs={'slug': course.slug})))
+        
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for url in urls:
+        xml += f'  <url>\n    <loc>{url}</loc>\n    <changefreq>daily</changefreq>\n  </url>\n'
+    xml += '</urlset>'
+    
+    return HttpResponse(xml, content_type="application/xml")
+
 def contact_view(request):
     if request.method == "POST":
         # Process contact form (dummy for now)
@@ -309,46 +331,28 @@ def chat_api_view(request):
             return JsonResponse({"response": "It seems you didn't type anything. How can I help?"})
 
         # ── Greetings ──
-        if "hello" in query or "hi" in query:
-            return JsonResponse({"response": "Hello! Welcome to Academic LMS. I am your specialised Assistant. How can I help you today?"})
+        if any(word in query for word in ["hello", "hi", "hey"]):
+            return JsonResponse({"response": "Hello! I am your Academic Assistant. I can help you find courses, explain our learning tracks, or assist with your account. How can I help?"})
+
+        # ── Platform Info ──
+        if "what is this" in query or "about" in query:
+            return JsonResponse({"response": "Academic LMS is a world-class learning platform designed to provide immersive, high-quality education. We offer courses in Programming, Data Science, Arts, and more, taught by industry experts."})
+
+        # ── Enrollment/Pricing ──
+        if "cost" in query or "price" in query or "free" in query:
+            return JsonResponse({"response": "We offer both Free and Paid courses. You can filter for free courses in our 'Explore' section. Paid courses are priced competitively to ensure quality content."})
+
+        # ── SEO/Visibility ──
+        if "sitemap" in query or "indexing" in query:
+            return JsonResponse({"response": "Our platform is SEO-optimized with dynamic sitemaps and clean metadata to ensure your profile and courses are discoverable on Google!"})
 
         # ── Password / reset ──
-        if "password" in query or "reset" in query:
-            return JsonResponse({"response": "You can reset your password by clicking 'Forgot password?' on the Sign In page!"})
+        if "password" in query or "reset" in query or "forgot" in query:
+            return JsonResponse({"response": "No worries! You can reset your password using our secure OTP-based flow. Just go to the Login page and click 'Forgot password?' to get started."})
 
-        # ── Role-aware greeting ──
-        try:
-            user_role = getattr(request.user, 'role', '') if request.user.is_authenticated else ''
-        except Exception:
-            user_role = ''
-
-        # ── Instructor insight (requires MongoDB) ──
-        if user_role == 'instructor' and any(word in query for word in ["popular", "teach", "demand", "idea"]):
-            try:
-                from accounts.mongo import get_db
-                db = get_db()
-                if db is not None:
-                    cursor = db.search_logs.aggregate([
-                        {"$group": {"_id": "$query", "count": {"$sum": 1}}},
-                        {"$sort": {"count": -1}},
-                        {"$limit": 1},
-                    ], maxTimeMS=2000)
-                    top_search = list(cursor)
-                    if top_search and top_search[0]["_id"] and top_search[0]["_id"].strip():
-                        suggestion = top_search[0]["_id"]
-                        return JsonResponse({
-                            "response": f"[Instructor Insight] Based on our active database metrics, users are heavily searching for **'{suggestion}'**. I highly recommend you build a course around this to maximise sales!"
-                        })
-                    else:
-                        return JsonResponse({"response": "[Instructor Insight] We do NOT have enough search metrics recorded today to confidently suggest a topic."})
-                else:
-                    return JsonResponse({"response": "I tried to fetch some instructor insights for you, but our metrics database is currently offline. Please try again later!"})
-            except Exception:
-                return JsonResponse({"response": "I tried to fetch some instructor insights for you, but our metrics database is currently offline. Please try again later!"})
-
-        # ── Become instructor ──
-        if "instructor" in query or "teach" in query:
-            return JsonResponse({"response": "To become an instructor and start creating courses, please navigate to the 'Become an Instructor' pipeline at the bottom of the page."})
+        # ── Instructor ──
+        if "teach" in query or "instructor" in query:
+            return JsonResponse({"response": "Join our community of world-class instructors! Click 'Become an Instructor' in the footer to start your journey."})
 
         # ── Dynamic course search from DB ──
         courses = Course.objects.filter(title__icontains=query, is_published=True)

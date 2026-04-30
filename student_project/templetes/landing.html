@@ -2,23 +2,32 @@
 {% block title %}Academic LMS - Learn Without Limits{% endblock %}
 
 {% block content %}
-<!-- Hero Search Section -->
-<div class="py-5 mb-5 text-center text-white rounded-5 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #0056d2 0%, #002d72 100%); min-height: 450px; display: flex; align-items: center;">
+<!-- Hero Section -->
+<div class="py-5 mb-5 rounded-5 position-relative overflow-hidden shadow-sm" style="background-color: #ffffff; border: 1px solid var(--border-color); min-height: 500px; display: flex; align-items: center;">
     <div class="container position-relative z-1">
-        <h1 class="display-3 fw-bold mb-3">Learn Without Limits</h1>
-        <p class="lead mb-5 opacity-75">Start, switch, or advance your career with more than 5,000 courses, Professional Certificates, and degrees from world-class universities and companies.</p>
-        
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <form action="{% url 'courses:course_list' %}" method="get" class="d-flex shadow-lg rounded-pill bg-white p-2">
-                    <input type="text" name="q" class="form-control border-0 rounded-pill ps-4" placeholder="What do you want to learn today?" style="font-size: 1.1rem; box-shadow: none;">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-3 fw-bold mb-4" style="color: var(--google-grey-900); letter-spacing: -1.5px;">Learn Without Limits</h1>
+                <p class="lead mb-5" style="color: var(--google-grey-700); font-size: 1.25rem;">Start, switch, or advance your career with more than 5,000 courses, Professional Certificates, and degrees from world-class universities and companies.</p>
+                
+                <div class="d-flex gap-3 mb-5">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg px-5 py-3">Join for Free</a>
+                    <a href="{% url 'courses:course_list' %}" class="btn btn-outline-primary btn-lg px-5 py-3">Explore Courses</a>
+                </div>
+                
+                <form action="{% url 'courses:course_list' %}" method="get" class="d-flex shadow-sm rounded-pill bg-light p-2 border">
+                    <input type="text" name="q" class="form-control border-0 bg-transparent ps-4" placeholder="What do you want to learn today?" style="font-size: 1.1rem; box-shadow: none;">
                     <button type="submit" class="btn btn-primary rounded-pill px-4 ms-2 fw-bold">Search</button>
                 </form>
             </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="position-relative">
+                    <div class="bg-primary opacity-10 rounded-circle position-absolute" style="width: 400px; height: 400px; top: -50px; right: -50px;"></div>
+                    <img src="https://www.gstatic.com/marketing-content/static/images/google-cloud-hero.png" alt="Hero Illustration" class="img-fluid position-relative z-1" style="max-height: 400px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));" onerror="this.src='https://via.placeholder.com/400x400?text=Learning';">
+                </div>
+            </div>
         </div>
     </div>
-    <!-- Decorative Circle -->
-    <div class="position-absolute bg-white opacity-10 rounded-circle" style="width: 400px; height: 400px; bottom: -100px; right: -100px;"></div>
 </div>
 
 <div class="container">

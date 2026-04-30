@@ -3,34 +3,30 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="card card-material p-4 mt-5">
-            <h3 class="text-center mb-4" style="font-weight: 500; color: #202124;">Sign In</h3>
+        <div class="card border-0 shadow-sm p-4 mt-5">
+            <h3 class="text-center mb-4 fw-bold">Sign In</h3>
             
             <form method="post">
-                {% comment %}
-                  EDUCATIONAL COMMENT:
-                  {% csrf_token %} is CRITICAL for security. It prevents Cross-Site Request Forgery!
-                {% endcomment %}
                 {% csrf_token %}
                 {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                 
                 <div class="mb-3">
-                    <label for="id_username" class="form-label" style="font-weight: 500; font-size: 0.9rem;">Username</label>
-                    <input type="text" name="username" class="form-control p-2" id="id_username" required>
+                    <label for="id_username" class="form-label fw-bold small text-uppercase text-muted">Username</label>
+                    <input type="text" name="username" class="form-control" id="id_username" required>
                 </div>
                 
                 <div class="mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label for="id_password" class="form-label mb-0" style="font-weight: 500; font-size: 0.9rem;">Password</label>
-                        <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none" style="font-size: 0.85rem; color: #1a73e8; font-weight: 500;">Forgot password?</a>
+                        <label for="id_password" class="form-label mb-0 fw-bold small text-uppercase text-muted">Password</label>
+                        <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none small fw-bold">Forgot password?</a>
                     </div>
                     <div class="input-group">
-                        <input type="password" name="password" class="form-control p-2" id="id_password" required>
-                        <button class="btn btn-outline-secondary px-3" type="button" id="togglePasswordBtn" style="font-size: 0.9rem; font-weight: 500;">Show</button>
+                        <input type="password" name="password" class="form-control" id="id_password" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">Show</button>
                     </div>
                 </div>
                 
-                <button type="submit" class="btn btn-google w-100 py-2 mb-3">Sign In</button>
+                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Sign In</button>
             </form>
             
             <div class="text-center mt-4">

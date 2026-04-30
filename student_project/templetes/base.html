@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,8 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LMS{% endblock %}</title>
 
-    <meta name="description" content="An academic Django project for learning Model-View-Template architecture.">
-    <meta name="keywords" content="Django, LMS, Learning Management System, Academic, Programming">
+    <meta name="description" content="Academic LMS - Empowering your future with world-class online courses. Join thousands of learners today.">
+    <meta name="keywords" content="Django, LMS, Learning Management System, Online Courses, Education, Programming, Science">
+    
+    <!-- Open Graph / SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="Academic LMS - Learn Without Limits">
+    <meta property="og:description" content="Start, switch, or advance your career with more than 5,000 courses from world-class universities.">
+    <meta property="og:image" content="{% static 'images/og-image.jpg' %}">
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,119 +27,178 @@
     This is a Django Template Tag. We use {% load static %} to load static files
     from STATICFILES_DIRS.
     {% endcomment %}
-    {% load static %}
 
     <style>
+        :root {
+            --google-blue: #1a73e8;
+            --google-blue-dark: #174ea6;
+            --google-grey-50: #f8f9fa;
+            --google-grey-100: #f1f3f4;
+            --google-grey-200: #e8eaed;
+            --google-grey-300: #dadce0;
+            --google-grey-500: #9aa0a6;
+            --google-grey-700: #5f6368;
+            --google-grey-800: #3c4043;
+            --google-grey-900: #202124;
+            
+            --primary-color: var(--google-blue);
+            --text-primary: var(--google-grey-900);
+            --text-secondary: var(--google-grey-700);
+            --bg-page: var(--google-grey-50);
+            --bg-surface: #ffffff;
+            --border-color: var(--google-grey-300);
+        }
+
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
-            /* Light grey Google workspace background */
-            color: #202124;
-            /* Google standard text color */
+            font-family: 'Inter', 'Roboto', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Material UI Style Navbar */
+        /* Premium Navbar */
         .navbar {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e0e0e0;
-            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
-            padding: 0.75rem 2rem;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 2rem;
+            height: 72px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
         }
 
         .navbar-brand {
-            color: #5f6368;
-            font-weight: 500;
+            font-weight: 700;
             font-size: 1.5rem;
-            letter-spacing: 0.25px;
+            color: var(--primary-color) !important;
+            letter-spacing: -0.5px;
         }
 
         .nav-link {
-            color: #3c4043;
+            color: var(--google-grey-800);
             font-weight: 500;
-            transition: background-color 0.2s;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.2s ease;
+            border-radius: 4px;
         }
 
         .nav-link:hover {
-            background-color: #f1f3f4;
+            color: var(--primary-color);
+            background-color: var(--google-grey-100);
+        }
+
+        /* Coursera/Google Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff !important;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 4px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--google-blue-dark);
+            box-shadow: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-surface);
+            font-weight: 600;
+            padding: 10px 24px;
             border-radius: 4px;
         }
 
-        /* Essential Google UI button */
-        .btn-google {
-            background-color: #1a73e8;
-            color: white;
-            font-weight: 500;
-            border-radius: 4px;
-            padding: 8px 24px;
-            border: none;
-            text-transform: none;
-            letter-spacing: .25px;
-            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
-            transition: background-color 0.2s, box-shadow 0.2s;
+        .btn-outline-primary:hover {
+            background-color: var(--google-grey-100);
+            border-color: var(--google-grey-300);
+            color: var(--google-blue-dark);
         }
 
-        .btn-google:hover {
-            background-color: #1b66c9;
-            color: white;
-            box-shadow: 0 1px 3px 0 rgba(60, 64, 67, .3), 0 4px 8px 3px rgba(60, 64, 67, .15);
-        }
-
-        .btn-google-outline {
-            color: #1a73e8;
-            background-color: transparent;
-            font-weight: 500;
-            border-radius: 4px;
-            padding: 8px 24px;
-            border: 1px solid #dadce0;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-google-outline:hover {
-            background-color: #f4f8fe;
-            border: 1px solid #d2e3fc;
-            color: #1a73e8;
-        }
-
-        /* Material Design Cards */
-        .card-material {
-            background: #ffffff;
-            border: 1px solid #dadce0;
+        /* Cards */
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            box-shadow: none;
-            transition: box-shadow 0.2s;
+            transition: box-shadow 0.2s ease-in-out;
         }
 
-        .card-material:hover {
-            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
+        .card:hover {
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
         }
 
         /* Forms */
-        .form-control {
+        .form-control, .form-select {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px;
             border-radius: 4px;
-            border: 1px solid #dadce0;
         }
 
         .form-control:focus {
-            border-color: #1a73e8;
-            box-shadow: inset 0 0 0 1px #1a73e8;
+            border-color: var(--primary-color);
+            box-shadow: inset 0 0 0 1px var(--primary-color);
+            background-color: #ffffff;
+            color: var(--text-primary);
+        }
+
+        /* Fix for white-on-white text in alerts */
+        .alert {
+            border: none;
+            border-radius: 8px;
+            color: var(--text-primary);
         }
 
         main {
             flex: 1;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
+            padding-top: 40px;
+            padding-bottom: 80px;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            color: var(--google-grey-900);
+        }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
         }
 
         footer {
-            background-color: #ffffff;
-            border-top: 1px solid #e0e0e0;
-            color: #5f6368;
-            padding: 1.5rem;
-            text-align: center;
+            background-color: var(--google-grey-900);
+            color: #ffffff;
+            padding: 4rem 0 2rem;
+        }
+
+        footer a {
+            color: #ffffff;
+            opacity: 0.7;
+        }
+
+        footer a:hover {
+            opacity: 1;
+            color: #ffffff;
+        }
+        footer a:hover {
+            opacity: 1;
+            color: #ffffff;
+        }
+
+        /* Chatbot Premium UI */
+        #chat-toggle {
+            background-color: var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+        #chat-toggle:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -167,11 +234,11 @@
 
                         <li class="nav-item"><a class="nav-link px-3" href="{% url 'courses:contact' %}">Contact</a></li>
                         <li class="nav-item">
-                        <a class="btn btn-google-outline ms-2" href="{% url 'accounts:logout' %}">Sign Out</a>
-                    </li>
+                            <a class="btn btn-outline-primary ms-2" href="{% url 'accounts:logout' %}">Sign Out</a>
+                        </li>
                     {% else %}
                         <li class="nav-item"><a class="nav-link px-3" href="{% url 'accounts:login' %}">Log In</a></li>
-                        <li class="nav-item"><a class="btn btn-google ms-2" href="{% url 'accounts:register' %}">Sign Up</a></li>
+                        <li class="nav-item"><a class="btn btn-primary ms-2" href="{% url 'accounts:register' %}">Join for Free</a></li>
                     {% endif %}
                 </ul>
             </div>

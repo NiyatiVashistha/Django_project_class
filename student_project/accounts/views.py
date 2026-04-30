@@ -47,7 +47,7 @@ def register_view(request):
 def instructor_signup_view(request):
     """Register a new instructor account."""
     if request.user.is_authenticated:
-        return redirect("courses:instructor_dashboard")
+        return redirect("instructor:dashboard")
 
     if request.method == "POST":
         form = InstructorSignUpForm(request.POST)
@@ -166,3 +166,80 @@ def otp_verify_view(request):
         form = OTPForm()
         
     return render(request, "accounts/otp_verify.html", {"form": form})
+
+
+# ──────────────────────────────────────────────
+# Forgot Password OTP Flow
+# ──────────────────────────────────────────────
+
+def password_reset_request_view(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        user = User.objects.filter(email=email).first()
+        if user:
+            otp_code = str(random.randint(100000, 999999))
+            request.session['password_reset_otp'] = otp_code
+            request.session['password_reset_user_id'] = user.id
+            
+            print(f"\n\n=== PASSWORD RESET OTP FOR {user.email}: {otp_code} ===\n\n")
+            
+            send_mail(
+                "Password Reset OTP",
+                f"Your OTP for password reset is {otp_code}.",
+                "noreply@lms.com",
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(request, "OTP sent to your email.")
+            return redirect("accounts:password_reset_otp")
+        else:
+            messages.error(request, "No user found with this email.")
+            
+    return render(request, "accounts/password_reset_request.html")
+
+
+def password_reset_otp_verify_view(request):
+    user_id = request.session.get('password_reset_user_id')
+    if not user_id:
+        return redirect("accounts:password_reset")
+        
+    if request.method == "POST":
+        form = OTPForm(request.POST)
+        if form.is_valid():
+            otp_input = form.cleaned_data['otp_code']
+            session_otp = request.session.get('password_reset_otp')
+            if session_otp and session_otp == otp_input:
+                request.session['password_reset_verified'] = True
+                return redirect("accounts:password_reset_change")
+            else:
+                messages.error(request, "Invalid OTP.")
+    else:
+        form = OTPForm()
+        
+    return render(request, "accounts/password_reset_otp.html", {"form": form})
+
+
+def password_reset_change_view(request):
+    if not request.session.get('password_reset_verified'):
+        return redirect("accounts:password_reset")
+        
+    user_id = request.session.get('password_reset_user_id')
+    user = get_object_or_404(User, id=user_id)
+    
+    from django.contrib.auth.forms import SetPasswordForm
+    
+    if request.method == "POST":
+        form = SetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            # Clean up session
+            del request.session['password_reset_user_id']
+            del request.session['password_reset_otp']
+            del request.session['password_reset_verified']
+            
+            messages.success(request, "Password reset successful. Please login.")
+            return redirect("accounts:login")
+    else:
+        form = SetPasswordForm(user)
+        
+    return render(request, "accounts/password_reset_change.html", {"form": form})

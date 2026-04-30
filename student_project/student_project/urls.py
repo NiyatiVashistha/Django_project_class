@@ -2,17 +2,21 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
-from courses.views import landing_view
+from django.views.generic import TemplateView
+from courses.views import landing_view, sitemap_view
 
 urlpatterns = [
-    path("", landing_view, name="landing"),          # Landing page
-    path("admin/", admin.site.urls),                 # Admin panel
-    path("accounts/", include("accounts.urls")),     # Auth system
-    path("accounts/", include("django.contrib.auth.urls")), # Built-in auth (password reset fix)
-    path("courses/", include("courses.urls")),       # Course system
-    path("instructor/", include("instructor.urls")), # Instructor system
+    path("", landing_view, name="landing"),
+    path("admin/", admin.site.urls),
+    path("accounts/", include("accounts.urls")),
+    path("accounts/", include("django.contrib.auth.urls")),
+    path("courses/", include("courses.urls")),
+    path("instructor/", include("instructor.urls")),
+    
+    # SEO
+    path("sitemap.xml", sitemap_view, name="sitemap"),
+    path("robots.txt", TemplateView.as_view(template_name="seo/robots.txt", content_type="text/plain")),
 ]
 
-# Media files (for development only)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
