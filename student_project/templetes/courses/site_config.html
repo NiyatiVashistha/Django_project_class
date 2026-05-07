@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Site Configuration - Academic LMS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 p-md-5" style="border-radius: 20px;">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-palette text-primary" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 fw-bold mb-1">Site Customization</h1>
+                        <p class="text-secondary mb-0">Change the look and feel of your platform instantly.</p>
+                    </div>
+                </div>
+
+                <hr class="mb-5 opacity-10">
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4">
+                        <!-- Branding -->
+                        <div class="col-12">
+                            <h5 class="fw-bold mb-3">Branding</h5>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase text-secondary">Site Name</label>
+                                {{ form.site_name }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase text-secondary">Logo</label>
+                                {{ form.site_logo }}
+                            </div>
+                        </div>
+
+                        <!-- Colors -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase text-secondary">Primary Color</label>
+                            {{ form.primary_color }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase text-secondary">Secondary Color</label>
+                            {{ form.secondary_color }}
+                        </div>
+
+                        <!-- Hero Content -->
+                        <div class="col-12 mt-5">
+                            <h5 class="fw-bold mb-3">Homepage Hero Section</h5>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase text-secondary">Hero Title</label>
+                                {{ form.hero_title }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase text-secondary">Hero Subtitle</label>
+                                {{ form.hero_subtitle }}
+                            </div>
+                        </div>
+
+                        <!-- Layout -->
+                        <div class="col-12 mt-5">
+                            <h5 class="fw-bold mb-3">Layout Strategy</h5>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase text-secondary">Global Layout</label>
+                                {{ form.layout_type }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-5 py-3 fw-bold shadow-sm">Save Changes</button>
+                        <a href="{% url 'courses:admin_analytics' %}" class="btn btn-outline-secondary px-4 py-3 border-0">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: {{ site_config.primary_color }};
+        box-shadow: 0 0 0 4px {{ site_config.primary_color }}22;
+    }
+</style>
+{% endblock %}

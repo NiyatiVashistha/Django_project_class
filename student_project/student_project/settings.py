@@ -16,17 +16,33 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+def load_env(env_path):
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ[key.strip()] = value.strip().strip("'").strip('"')
+
+load_env(BASE_DIR / '.env')
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_a*@&d&2_k6e=c4-asug6z2&27oc4o$e%v(5*1)_zjm1mzpvrz'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Security: Restrict Admin Portal to specific hosts
+# Supports CIDR notation (e.g., '127.0.0.0/8') via custom middleware
+ADMIN_ALLOWED_HOSTS = os.getenv('ADMIN_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -46,6 +62,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware', # Performance: Compress HTTP responses
+    'django.middleware.http.ConditionalGetMiddleware', # Performance: Handle ETag and Last-Modified
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.ExecutionTimingMiddleware', # Educational Custom Middleware
+    'accounts.middleware.AdminHostRestrictionMiddleware',
 ]
 
 ROOT_URLCONF = 'student_project.urls'
@@ -64,9 +83,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'courses.context_processors.site_config', # Commercial SEO & Config
             ],
         },
     },
@@ -138,9 +159,15 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "lms_db")
 
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "sk_test_replace_me")
-STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "pk_test_replace_me")
-STRIPE_CURRENCY = os.getenv("STRIPE_CURRENCY", "inr")
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # Use SMTP for production
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "support@academic.com")
+
+# Stripe Credentials (loaded from environment)
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
+STRIPE_CURRENCY = os.getenv("STRIPE_CURRENCY", "usd")
+STRIPE_MOCK_MODE = os.getenv("STRIPE_MOCK_MODE", "False") == "True"
 
 # SECURITY & NETWORK PROTOCOLS (Enterprise Standard)
 # Mitigate Cross-Site Scripting (XSS)

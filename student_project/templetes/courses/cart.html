@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Your Cart - Academic LMS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'courses:course_list' %}" class="btn btn-link text-decoration-none p-0 me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h2 class="fw-bold mb-0">Shopping Cart</h2>
+            </div>
+
+            {% if courses %}
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <ul class="list-group list-group-flush">
+                    {% for course in courses %}
+                    <li class="list-group-item p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                {% if course.thumbnail %}
+                                <img src="{{ course.thumbnail.url }}" class="img-fluid rounded" alt="{{ course.title }}">
+                                {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 60px;">
+                                    <i class="bi bi-book text-muted opacity-25"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-1">{{ course.title }}</h6>
+                                <p class="text-muted small mb-0">By {{ course.instructor.username }}</p>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <span class="fw-bold text-dark">₹{{ course.price }}</span>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <a href="{% url 'courses:cart_remove' course.id %}" class="btn btn-link text-danger p-0 text-decoration-none small">Remove</a>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="card border-0 shadow-sm p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="text-muted">Total Price:</span>
+                    <h3 class="fw-bold mb-0">₹{{ total_price }}</h3>
+                </div>
+                
+                {% if request.user.is_authenticated %}
+                <div class="alert alert-info border-0 small mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    All items in your cart will be available for enrollment upon checkout.
+                </div>
+                <!-- Logic for checkout would go here (e.g. bulk enrollment or multi-item payment) -->
+                <button class="btn btn-primary btn-lg w-100 py-3 fw-bold">Proceed to Checkout</button>
+                {% else %}
+                <div class="alert alert-warning border-0 small mb-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Please <a href="{% url 'accounts:login' %}?next={% url 'courses:cart' %}" class="fw-bold">Log In</a> or <a href="{% url 'accounts:register' %}" class="fw-bold">Sign Up</a> to complete your purchase.
+                </div>
+                <a href="{% url 'accounts:login' %}?next={% url 'courses:cart' %}" class="btn btn-primary btn-lg w-100 py-3 fw-bold">Log In to Checkout</a>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-cart-x text-muted" style="font-size: 5rem; opacity: 0.2;"></i>
+                </div>
+                <h3>Your cart is empty</h3>
+                <p class="text-muted mb-4">Looks like you haven't added any courses yet.</p>
+                <a href="{% url 'courses:course_list' %}" class="btn btn-primary px-5 py-3">Browse Courses</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

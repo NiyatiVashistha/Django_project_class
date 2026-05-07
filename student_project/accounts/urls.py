@@ -10,6 +10,8 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("otp-verify/", views.otp_verify_view, name="otp_verify"),
+    path("profile/edit/", views.profile_edit_view, name="profile_edit"),
+    path("google-login/", views.google_login_view, name="google_login"),
     
     # Password Reset Features (OTP-based)
     path("password-reset/", views.password_reset_request_view, name="password_reset"),

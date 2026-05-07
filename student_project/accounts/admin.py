@@ -1,19 +1,24 @@
 from django.contrib import admin
-from accounts.models import User
+from accounts.models import User, Student, Instructor
 
-# EDUCATIONAL FEATURE: ModelAdmin allows fine-grained customization of how 
-# a Django model shows up in the built-in admin panel (/admin).
-
+# MASTER USER LIST
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    # list_display controls which fields are visible in the table structure
     list_display = ("username", "email", "role", "is_active", "date_joined")
-    
-    # list_filter adds a sidebar filtering UI
     list_filter = ("role", "is_active", "is_staff", "is_superuser")
-    
-    # search_fields adds a search bar that performs ILIKE queries on these fields
     search_fields = ("username", "email")
-    
-    # readonly_fields protects critical timestamp fields from being manually edited
     readonly_fields = ("last_login_time", "date_joined")
+
+# DEDICATED STUDENT LIST
+@admin.register(Student)
+class StudentAdmin(UserAdmin):
+    """Admin view for Students only."""
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(role=User.Role.STUDENT)
+
+# DEDICATED INSTRUCTOR LIST
+@admin.register(Instructor)
+class InstructorAdmin(UserAdmin):
+    """Admin view for Instructors only."""
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(role=User.Role.INSTRUCTOR)

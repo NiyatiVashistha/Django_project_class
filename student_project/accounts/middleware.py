@@ -1,5 +1,8 @@
 import time
 import logging
+import ipaddress
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
 
 class ExecutionTimingMiddleware:
     """
@@ -30,7 +33,45 @@ class ExecutionTimingMiddleware:
         # Add a custom HTTP header to the response that the frontend can read!
         response['X-Execution-Time'] = str(duration)
         
-        # Uncomment below to print to the development server console:
-        # print(f"[{request.method}] {request.path} took {duration:.4f} seconds")
-
         return response
+
+
+class AdminHostRestrictionMiddleware:
+    """
+    SECURITY FEATURE: Restricts access to the /admin/ URL to only allowed hosts.
+    This ensures that even if someone knows the admin URL, they can't access it 
+    unless they are connecting from a specific 'Management' host or VPN.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith('/admin/'):
+            # Allow all hosts in DEBUG mode for development ease
+            if settings.DEBUG:
+                return self.get_response(request)
+
+            allowed_hosts = getattr(settings, 'ADMIN_ALLOWED_HOSTS', [])
+            current_host = request.get_host().split(':')[0] # Remove port if present
+
+            is_allowed = False
+            for entry in allowed_hosts:
+                # Exact match
+                if entry == current_host:
+                    is_allowed = True
+                    break
+                # CIDR match
+                try:
+                    if '/' in entry:
+                        network = ipaddress.ip_network(entry)
+                        ip_addr = ipaddress.ip_address(current_host)
+                        if ip_addr in network:
+                            is_allowed = True
+                            break
+                except (ValueError, AttributeError):
+                    continue
+            
+            if not is_allowed:
+                raise PermissionDenied("Admin portal is restricted to management hosts.")
+                
+        return self.get_response(request)

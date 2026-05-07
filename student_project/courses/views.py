@@ -1,3 +1,17 @@
+"""
+THE APPLICATION ENGINE: VIEWS & APIS
+====================================
+This file controls the heart of the Learning Management System.
+It handles everything from displaying course lists to processing AJAX chat requests.
+
+KEY CONCEPTS:
+1. AJAX (Asynchronous JavaScript and XML): Communicating with the server without 
+   refreshing the page (used in the Chatbot).
+2. JSON (JavaScript Object Notation): The data format used for AJAX communication.
+3. DECORATORS: Like @login_required, which check permissions before running a function.
+4. SERVER-SIDE RENDERING: Using Python to create the HTML pages the user sees.
+"""
+
 import json
 from functools import wraps
 
@@ -9,8 +23,9 @@ from django.db.models import Count, Sum, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 
-from courses.models import Course, Enrollment, Lesson, Payment
+from courses.models import Course, Enrollment, Lesson, Payment, Review, Community, CommunityMessage, Category
 from courses.services import (
     search_courses,
     enroll_student,
@@ -19,6 +34,7 @@ from courses.services import (
     finalize_stripe_payment,
     get_student_dashboard_data,
     log_course_activity,
+    get_admin_analytics_data,
 )
 
 
@@ -27,11 +43,11 @@ from courses.services import (
 # ──────────────────────────────────────────────
 
 def instructor_required(view_func):
-    """Allow only users whose role is 'instructor'."""
+    """Allow only users whose role is 'instructor' or 'admin'."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if not request.user.is_authenticated or not getattr(request.user, 'is_instructor', False):
-            raise PermissionDenied("Only instructors can access this area.")
+        if not request.user.is_authenticated or not (request.user.is_instructor or request.user.role == 'admin'):
+            raise PermissionDenied("Only instructors and administrators can access this area.")
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -119,11 +135,13 @@ def course_detail_view(request, slug):
 
     lessons = course.lessons.all().order_by("order")
     enrolled = request.user.is_authenticated and is_enrolled(request.user, course)
+    reviews = course.reviews.all().order_by("-created_at")
 
     return render(request, "courses/course_detail.html", {
         "course": course,
         "lessons": lessons,
         "enrolled": enrolled,
+        "reviews": reviews,
     })
 
 
@@ -228,11 +246,52 @@ def learn_view(request, slug):
     if not current_lesson:
         current_lesson = lessons.first()
 
+    # Calculate Progress
+    total_lessons = lessons.count()
+    completed_lessons = LessonProgress.objects.filter(
+        user=request.user,
+        lesson__course=course,
+        is_completed=True
+    )
+    completed_lessons_count = completed_lessons.count()
+    completed_lesson_ids = list(completed_lessons.values_list("lesson_id", flat=True))
+    progress_percent = int((completed_lessons_count / total_lessons) * 100) if total_lessons > 0 else 0
+
     return render(request, "courses/learn.html", {
         "course": course,
         "lessons": lessons,
         "current_lesson": current_lesson,
+        "progress_percent": progress_percent,
+        "completed_lesson_ids": completed_lesson_ids,
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def complete_lesson_view(request, slug, lesson_id):
+    course = get_object_or_404(Course, slug=slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+    
+    # Mark as completed
+    progress, created = LessonProgress.objects.get_or_create(
+        user=request.user,
+        lesson=lesson,
+        defaults={'is_completed': True}
+    )
+    if not created:
+        progress.is_completed = True
+        progress.save()
+    
+    # Find next lesson
+    next_lesson = course.lessons.filter(order__gt=lesson.order).order_by('order').first()
+    
+    if next_lesson:
+        redirect_url = reverse('courses:learn', kwargs={'slug': slug})
+        return redirect(f"{redirect_url}?lesson={next_lesson.id}")
+    else:
+        # Course completed!
+        messages.success(request, f"Congratulations! You've completed {course.title}.")
+        return redirect("courses:dashboard")
 
 
 # ──────────────────────────────────────────────
@@ -246,46 +305,19 @@ def dashboard_view(request):
 
 
 # ──────────────────────────────────────────────
-# ──────────────────────────────────────────────
-# Admin Analytics
-# ──────────────────────────────────────────────
-
-@login_required
-@admin_required
-def admin_analytics_view(request):
-    from accounts.models import User
-
-    total_revenue = Payment.objects.filter(status='completed').aggregate(total=Sum('amount'))['total'] or 0
-    total_users = User.objects.count()
-    total_courses = Course.objects.count()
-    total_enrollments = Enrollment.objects.count()
-
-    instructors = User.objects.filter(role='instructor').annotate(
-        course_count=Count('courses_taught', distinct=True),
-        total_students=Count('courses_taught__enrollments', distinct=True),
-        revenue_generated=Sum(
-            'courses_taught__enrollments__payment__amount',
-            filter=Q(courses_taught__enrollments__payment__status='completed')
-        )
-    )
-
-    return render(request, "admin/analytics_dashboard.html", {
-        "total_revenue": total_revenue,
-        "total_users": total_users,
-        "total_courses": total_courses,
-        "total_enrollments": total_enrollments,
-        "instructors": instructors,
-    })
-
-
-# ──────────────────────────────────────────────
 # Static / FAQ Page
 # ──────────────────────────────────────────────
 
 def faq_view(request):
+    """A simple view to render the FAQ page."""
     return render(request, "pages/faq.html")
 
 def sitemap_view(request):
+    """
+    SEO FEATURE: Dynamic Sitemap
+    This view generates an XML file that tells Google about all the pages 
+    on our site, helping us rank higher in search results.
+    """
     from django.http import HttpResponse
     from django.urls import reverse
     
@@ -303,27 +335,53 @@ def sitemap_view(request):
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     for url in urls:
         xml += f'  <url>\n    <loc>{url}</loc>\n    <changefreq>daily</changefreq>\n  </url>\n'
-    xml += '</urlset>'
     
+    xml += '</urlset>'
     return HttpResponse(xml, content_type="application/xml")
 
 def contact_view(request):
+    """Handles the contact form submission."""
     if request.method == "POST":
-        # Process contact form (dummy for now)
-        messages.success(request, "Thank you for contacting us! We will get back to you shortly.")
+        from courses.models import ContactMessage
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        subject = request.POST.get("subject")
+        message = request.POST.get("message")
+        
+        if name and email and message:
+            ContactMessage.objects.create(
+                name=name,
+                email=email,
+                subject=subject or "General Inquiry",
+                message=message
+            )
+            messages.success(request, "Thank you for contacting us! We have received your message.")
+        else:
+            messages.error(request, "Please fill in all required fields.")
+            
         return redirect("courses:contact")
     return render(request, "pages/contact.html")
 
 
 # ──────────────────────────────────────────────
-# Chatbot API
+# Chatbot API (The AJAX/JSON Hub)
 # ──────────────────────────────────────────────
 
 def chat_api_view(request):
+    """
+    HOW AJAX WORKS HERE:
+    1. The Browser (Client) sends a background request using JavaScript's fetch().
+    2. The request contains a 'JSON' string in the body.
+    3. The Server (this Python code) reads the JSON, processes it, and sends back
+       a 'JsonResponse' (more JSON).
+    4. The Browser receives the response and updates the chat window without 
+       reloading the whole page.
+    """
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=400)
 
     try:
+        # JSON DECODING: Turning the raw string from the browser back into a Python dictionary.
         data = json.loads(request.body)
         query = data.get("message", "").lower().strip()
 
@@ -355,17 +413,288 @@ def chat_api_view(request):
             return JsonResponse({"response": "Join our community of world-class instructors! Click 'Become an Instructor' in the footer to start your journey."})
 
         # ── Dynamic course search from DB ──
-        courses = Course.objects.filter(title__icontains=query, is_published=True)
+        # IMPROVEMENT: Instead of searching the whole query string, we extract keywords if needed
+        # or search if the query itself is short and likely a course name.
+        search_query = query
+        if len(query.split()) > 4:
+            # If query is long, it's likely a sentence like "I want to learn python"
+            # We try to extract common course keywords.
+            keywords = ["python", "java", "web", "design", "business", "data", "marketing"]
+            found_keywords = [w for w in keywords if w in query]
+            if found_keywords:
+                search_query = found_keywords[0]
+
+        from django.db.models import Q
+        courses = Course.objects.filter(
+            Q(title__icontains=search_query) | Q(category__name__icontains=search_query), 
+            is_published=True
+        )
+        
+        bot_response = ""
         if courses.exists():
             course = courses.first()
             if course.is_free:
-                return JsonResponse({"response": f"I found a matching course: **'{course.title}'**. Great news, it is completely FREE! Go to 'Available Courses' to enroll."})
-            return JsonResponse({"response": f"I found a matching course: **'{course.title}'**. It costs ₹{course.price}. You can find it on the 'Available Courses' page!"})
+                bot_response = f"I found a matching course: **'{course.title}'**. Great news, it is completely FREE! Go to 'Available Courses' to enroll."
+            else:
+                bot_response = f"I found a matching course: **'{course.title}'**. It costs ₹{course.price}. You can find it on the 'Available Courses' page!"
+        elif "course" in query or "learn" in query:
+             bot_response = "We have many courses! You can check our 'Explore Courses' page to see everything we offer in Programming, Business, and more."
+        else:
+            bot_response = "I am not exactly sure about that, but you can try using our main Search Bar or visiting the FAQ page!"
 
-        # ── Fallback ──
-        return JsonResponse({"response": "I am not exactly sure about that, but you can try using our main Search Bar or visiting the FAQ page!"})
+        # ── LOGGING: Save the chat for staff analysis ──
+        try:
+            from courses.models import ChatLog
+            ChatLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                message=query,
+                response=bot_response
+            )
+        except:
+            # If logging fails (e.g. table not created), we don't want to crash the whole chat.
+            pass
+
+        return JsonResponse({"response": bot_response})
 
     except json.JSONDecodeError:
         return JsonResponse({"response": "I couldn't understand your message. Please try again."}, status=400)
     except Exception as e:
+        # CATCH-ALL ERROR HANDLING: Ensures the server doesn't crash if something goes wrong.
         return JsonResponse({"response": f"I encountered a technical error. Please contact support if this persists."}, status=500)
+
+
+@admin_required
+def admin_analytics_view(request):
+    """
+    ADMIN VIEW: Displays the platform analytics dashboard.
+    """
+    data = get_admin_analytics_data()
+    return render(request, "courses/admin_analytics.html", data)
+
+
+@admin_required
+def site_config_view(request):
+    """
+    ADMIN VIEW: Allows dynamic layout and branding changes.
+    """
+    from courses.models import SiteConfiguration
+    from courses.forms import SiteConfigurationForm
+    from django.db import OperationalError, ProgrammingError
+
+    try:
+        config = SiteConfiguration.objects.first()
+    except (OperationalError, ProgrammingError):
+        config = None
+    if request.method == "POST":
+        form = SiteConfigurationForm(request.POST, request.FILES, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Site configuration updated successfully!")
+            return redirect("courses:admin_analytics")
+    else:
+        form = SiteConfigurationForm(instance=config)
+    
+    return render(request, "courses/site_config.html", {"form": form})
+
+
+# ──────────────────────────────────────────────
+# Cart Management (Session-based for Guests & Users)
+# ──────────────────────────────────────────────
+
+def cart_view(request):
+    """Displays the current items in the user's cart."""
+    cart = request.session.get('cart', {})
+    course_ids = cart.keys()
+    courses = Course.objects.filter(id__in=course_ids)
+    
+    total_price = sum(course.price for course in courses)
+    
+    return render(request, "courses/cart.html", {
+        "courses": courses,
+        "total_price": total_price
+    })
+
+
+def cart_add(request, course_id):
+    """Adds a course to the session-based cart."""
+    course = get_object_or_404(Course, id=course_id, is_published=True)
+    cart = request.session.get('cart', {})
+    
+    # Check if already enrolled (if logged in)
+    if request.user.is_authenticated:
+        if Enrollment.objects.filter(student=request.user, course=course).exists():
+            messages.info(request, f"You are already enrolled in '{course.title}'.")
+            return redirect("courses:course_detail", slug=course.slug)
+
+    # Use course_id as string key for JSON session compatibility
+    course_id_str = str(course_id)
+    if course_id_str not in cart:
+        cart[course_id_str] = 1 # We only need 1 of each course
+        request.session['cart'] = cart
+        messages.success(request, f"'{course.title}' added to your cart!")
+    else:
+        messages.info(request, f"'{course.title}' is already in your cart.")
+        
+    return redirect("courses:cart")
+
+
+def cart_remove(request, course_id):
+    """Removes a course from the session-based cart."""
+    cart = request.session.get('cart', {})
+    course_id_str = str(course_id)
+    
+    if course_id_str in cart:
+        del cart[course_id_str]
+        request.session['cart'] = cart
+        messages.success(request, "Course removed from cart.")
+        
+    return redirect("courses:cart")
+
+
+@login_required
+def follow_instructor_view(request, instructor_id):
+    """Allows a student to follow or unfollow an instructor."""
+    from accounts.models import User, Follow
+    instructor = get_object_or_404(User, id=instructor_id, role=User.Role.INSTRUCTOR)
+    
+    if instructor == request.user:
+        messages.error(request, "You cannot follow yourself.")
+        return redirect("courses:course_list")
+
+    follow, created = Follow.objects.get_or_create(student=request.user, instructor=instructor)
+    
+    if not created:
+        follow.delete()
+        messages.success(request, f"You have unfollowed {instructor.username}.")
+    else:
+        messages.success(request, f"You are now following {instructor.username}!")
+        
+    return redirect(request.META.get('HTTP_REFERER', 'courses:course_list'))
+
+
+def community_list_view(request):
+    """Displays all available communities."""
+    from courses.models import Community
+    communities = Community.objects.all()
+    return render(request, "courses/community_list.html", {"communities": communities})
+
+
+@login_required
+def community_join_view(request, slug):
+    """Allows a user to join or leave a community."""
+    from courses.models import Community
+    community = get_object_or_404(Community, slug=slug)
+    
+    if request.user in community.members.all():
+        community.members.remove(request.user)
+        messages.success(request, f"You have left the {community.name} community.")
+    else:
+        community.members.add(request.user)
+        messages.success(request, f"Welcome to the {community.name} community!")
+        
+    return redirect("courses:community_list")
+
+
+@admin_required
+def admin_mail_draft_view(request):
+    """Allows admins to draft emails and 'send' them (logically)."""
+    from courses.models import MailDraft
+    from accounts.models import User
+    
+    if request.method == "POST":
+        subject = request.POST.get("subject")
+        body = request.POST.get("body")
+        recipient_type = request.POST.get("recipient_type")
+        
+        draft = MailDraft.objects.create(
+            subject=subject,
+            body=body,
+            recipient_type=recipient_type,
+            sent_at=timezone.now() # Simulate sending immediately
+        )
+        
+        # Logically 'sending' (in a real app, use send_mail() here)
+        messages.success(request, f"Email '{subject}' sent to {recipient_type} recipients!")
+        return redirect("courses:admin_analytics")
+        
+    return render(request, "courses/admin_mail_draft.html")
+
+
+@login_required
+def community_create_view(request):
+    """Allows authenticated users to create a new community."""
+    from courses.forms import CommunityForm
+    from courses.models import Community
+    if request.method == "POST":
+        form = CommunityForm(request.POST, request.FILES)
+        if form.is_valid():
+            community = form.save(commit=False)
+            community.creator = request.user
+            community.save()
+            community.members.add(request.user)
+            messages.success(request, f"Community '{community.name}' created successfully!")
+            return redirect("courses:community_list")
+    else:
+        form = CommunityForm()
+    
+    return render(request, "courses/community_form.html", {"form": form})
+
+
+@login_required
+def course_review_view(request, slug):
+    from courses.forms import ReviewForm
+    course = get_object_or_404(Course, slug=slug)
+    if not is_enrolled(request.user, course):
+        messages.error(request, "You must be enrolled to leave a review.")
+        return redirect("courses:course_detail", slug=slug)
+    
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            Review.objects.update_or_create(
+                course=course, student=request.user,
+                defaults={'rating': form.cleaned_data['rating'], 'comment': form.cleaned_data['comment']}
+            )
+            messages.success(request, "Thank you for your feedback!")
+            return redirect("courses:course_detail", slug=slug)
+    else:
+        existing_review = Review.objects.filter(course=course, student=request.user).first()
+        form = ReviewForm(instance=existing_review)
+    
+    return render(request, "courses/review_form.html", {"course": course, "form": form})
+
+
+@login_required
+def community_chat_view(request, slug):
+    course = get_object_or_404(Course, slug=slug)
+    is_authorized = (
+        is_enrolled(request.user, course) or 
+        course.instructor == request.user or 
+        request.user.role == 'admin'
+    )
+    
+    if not is_authorized:
+        messages.error(request, "Access restricted to course participants.")
+        return redirect("courses:course_detail", slug=slug)
+    
+    community = getattr(course, 'community', None)
+    if not community:
+        community = Community.objects.create(
+            name=f"{course.title} Community",
+            course=course,
+            creator=course.instructor or request.user,
+            description=f"Official community for students of {course.title}"
+        )
+    
+    if request.method == "POST":
+        content = request.POST.get("content")
+        if content:
+            CommunityMessage.objects.create(community=community, user=request.user, content=content)
+            return redirect("courses:community_chat", slug=slug)
+
+    messages_list = community.messages.all().order_by("-timestamp")[:100]
+    return render(request, "courses/community_chat.html", {
+        "course": course,
+        "community": community,
+        "messages_list": reversed(messages_list)
+    })

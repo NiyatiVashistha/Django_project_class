@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Server Error - Academic LMS{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="display-1 fw-bold text-danger mb-3">500</h1>
+            <h2 class="mb-4">Internal Server Error</h2>
+            <p class="text-secondary mb-5">Something went wrong on our end. We've been notified and are looking into it. Please try again later.</p>
+            <a href="{% url 'landing' %}" class="btn btn-outline-primary btn-lg rounded-pill px-5">Refresh Page</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

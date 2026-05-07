@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Communities - Academic LMS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="fw-bold text-dark mb-1">Explore Communities</h1>
+            <p class="text-muted mb-0">Join groups of like-minded learners and instructors.</p>
+        </div>
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'courses:community_create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
+            <i class="bi bi-plus-lg me-1"></i> Create Community
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        {% for community in communities %}
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 rounded-4 transition-card">
+                {% if community.thumbnail %}
+                    <img src="{{ community.thumbnail.url }}" class="card-img-top rounded-top-4" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-light rounded-top-4 d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="bi bi-people text-muted opacity-25" style="font-size: 4rem;"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-dark">{{ community.name }}</h5>
+                    <p class="text-muted small mb-4">{{ community.description|truncatewords:20 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small"><i class="bi bi-person-check me-1"></i> {{ community.members.count }} members</span>
+                        <a href="{% url 'courses:community_join' community.slug %}" class="btn {% if request.user in community.members.all %}btn-outline-secondary{% else %}btn-primary{% endif %} btn-sm px-4 rounded-pill">
+                            {% if request.user in community.members.all %}Leave{% else %}Join Group{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-people opacity-10" style="font-size: 5rem;"></i>
+            <h4 class="mt-3 text-muted">No communities found.</h4>
+            <p class="text-muted">Check back later or ask an admin to create one!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,56 +1,128 @@
 {% extends 'base.html' %}
 {% block title %}{{ course.title }} - Google LMS{% endblock %}
 {% block content %}
-<div class="card card-material p-4 p-md-5 mt-4 mb-5">
-    <h1 class="display-5 fw-bold mb-3" style="color: #202124;">{{ course.title }}</h1>
-    
-    <div class="d-flex flex-wrap gap-4 mb-4 text-secondary" style="font-weight: 500;">
-        <span>Instructor: <span class="text-dark">{{ course.instructor.username|default:"System Admin" }}</span></span>
-        <span>Category: <span class="text-dark">{{ course.category.name|default:"Uncategorized" }}</span></span>
-        <span>Difficulty: <span class="text-dark text-capitalize">{{ course.difficulty }}</span></span>
-    </div>
-    
-    <h4 class="mt-4 mb-3" style="font-weight: 500;">Description</h4>
-    <div class="text-secondary" style="line-height: 1.6;">
-        {{ course.description|linebreaks }}
-    </div>
-    
-    <div class="my-5 p-5 rounded-4 text-center" style="background-color: #f8f9fa; border: 1px solid #dadce0;">
-        <h2 class="mb-4" style="color: #202124;">{% if course.is_free %}Free Access{% else %}Price: ₹{{ course.price }}{% endif %}</h2>
-        
-        {% comment %}
-          EDUCATIONAL COMMENT:
-          We conditionally show the Enroll/Learn button based on the `enrolled` 
-          context variable passed by the view!
-        {% endcomment %}
-        {% if request.user == course.instructor %}
-            <p class="text-primary fw-bold mb-4">This is your course.</p>
-            <a href="{% url 'instructor:course_edit' course.slug %}" class="btn btn-primary btn-lg px-4 shadow">Manage & Edit Course</a>
-        {% elif enrolled %}
-            <p class="text-success fw-bold mb-4">You are enrolled in this course.</p>
-            <a href="{% url 'courses:learn' course.slug %}" class="btn btn-google btn-lg px-4">Go to Course Material</a>
-        {% else %}
-            {% if request.user.is_authenticated %}
-                <form action="{% url 'courses:enroll' course.slug %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-google btn-lg px-5">Enroll Now</button>
-                </form>
-            {% else %}
-                <p class="text-secondary">Please <a href="{% url 'accounts:login' %}" style="color: #1a73e8; font-weight: 500; text-decoration: none;">Sign in</a> to enroll.</p>
-            {% endif %}
-        {% endif %}
+<div class="card border-0 shadow-lg p-0 mt-4 mb-5 overflow-hidden" style="border-radius: var(--radius-lg);">
+    <!-- Hero Area -->
+    <div class="bg-white p-5 border-bottom">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'landing' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'courses:course_list' %}">Courses</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ course.category.name|default:"General" }}</li>
+                    </ol>
+                </nav>
+                <h1 class="display-4 fw-bold mb-3" style="color: var(--secondary-color);">{{ course.title }}</h1>
+                <div class="d-flex flex-wrap gap-4 mb-4 text-muted align-items-center">
+                    <span class="d-flex align-items-center">
+                        <i class="bi bi-person-circle me-2"></i>
+                        Instructor: <span class="text-dark fw-bold ms-1">{{ course.instructor.username }}</span>
+                        {% if course.instructor and course.instructor != request.user %}
+                            <a href="{% url 'courses:follow_instructor' course.instructor.id %}" class="btn btn-outline-primary btn-sm ms-3 rounded-pill px-3">Follow</a>
+                        {% endif %}
+                    </span>
+                    <span class="d-flex align-items-center"><i class="bi bi-bar-chart me-2"></i>{{ course.get_difficulty_display }}</span>
+                    <span class="d-flex align-items-center"><i class="bi bi-clock me-2"></i>{{ total_duration|default:"12.5" }} hours</span>
+                </div>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="stars me-2">★★★★★</div>
+                    <span class="fw-bold text-dark me-2">4.9</span>
+                    <span class="text-muted">(1,240 ratings)</span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="p-4 bg-light rounded-4 border">
+                    <h2 class="fw-bold mb-4">{% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}</h2>
+                    {% if enrolled %}
+                        <div class="alert alert-success border-0 small mb-4">You are enrolled in this course</div>
+                        <a href="{% url 'courses:learn' course.slug %}" class="btn btn-primary w-100 py-3 mb-3 shadow">Continue Learning</a>
+                    {% else %}
+                        <div class="d-flex flex-column gap-3">
+                            <a href="{% url 'courses:cart_add' course.id %}" class="btn btn-outline-primary w-100 py-3 fw-bold">Add to Cart</a>
+                            <form action="{% url 'courses:enroll' course.slug %}" method="post" class="w-100">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary w-100 py-3 shadow">Enroll Now</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 
-    <h4 class="mb-3" style="font-weight: 500;">Course Syllabus</h4>
-    <div class="list-group list-group-flush border rounded mb-3">
-        {% for lesson in lessons %}
-            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                <span><strong class="text-dark">Lesson {{ lesson.order }}:</strong> <span class="text-secondary ms-2">{{ lesson.title }}</span></span>
-                <span class="badge bg-light text-secondary border rounded-pill">{{ lesson.duration_minutes }} mins</span>
+    <div class="card-body p-5">
+        <div class="row">
+            <div class="col-lg-8">
+                <h4 class="fw-bold mb-3">About this Course</h4>
+                <div class="text-muted mb-5" style="line-height: 1.8; font-size: 1.05rem;">
+                    {{ course.description|linebreaks }}
+                </div>
+
+                <h4 class="fw-bold mb-4">Syllabus - What you'll learn</h4>
+                <div class="accordion accordion-flush border rounded-4 overflow-hidden mb-5" id="syllabusAccordion">
+                    {% for lesson in lessons %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#lesson{{ lesson.id }}">
+                                    <span class="me-3 text-primary">{{ forloop.counter }}.</span> {{ lesson.title }}
+                                </button>
+                            </h2>
+                            <div id="lesson{{ lesson.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#syllabusAccordion">
+                                <div class="accordion-body text-muted small">
+                                    <div class="d-flex justify-content-between">
+                                        <span><i class="bi bi-play-circle me-2"></i>Video Lesson</span>
+                                        <span>{{ lesson.duration_minutes }} mins</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="p-4 text-center text-muted">Syllabus is being prepared.</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0">Student Reviews</h4>
+                        {% if enrolled %}
+                            <a href="{% url 'courses:course_review' course.slug %}" class="btn btn-outline-primary btn-sm rounded-pill px-4">Rate Course</a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if reviews %}
+                        <div class="row g-4">
+                            {% for review in reviews %}
+                                <div class="col-md-6">
+                                    <div class="card border-0 bg-light p-4 h-100">
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <span class="fw-bold text-dark">{{ review.student.username }}</span>
+                                            <span class="stars">★★★★★</span>
+                                        </div>
+                                        <p class="text-muted small mb-0">{{ review.comment }}</p>
+                                        <div class="text-muted mt-3" style="font-size: 0.7rem;">{{ review.created_at|date:"M d, Y" }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 bg-light rounded-4">
+                            <p class="text-muted mb-0">No reviews yet. Be the first to review!</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-        {% empty %}
-            <div class="list-group-item text-muted py-3">Syllabus is being prepared by the instructor.</div>
-        {% endfor %}
+
+            <div class="col-lg-4">
+                {% if enrolled or request.user == course.instructor %}
+                <div class="card border-0 bg-primary bg-opacity-10 p-4 sticky-top" style="top: 2rem;">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-people-fill me-2"></i>Community</h5>
+                    <p class="text-muted small">Join 1.2k other students in the discussion forum for this course.</p>
+                    <a href="{% url 'courses:community_chat' course.slug %}" class="btn btn-primary w-100">Go to Community</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

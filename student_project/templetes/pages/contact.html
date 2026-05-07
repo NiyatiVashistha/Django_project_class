@@ -3,27 +3,29 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card card-material border-0 shadow-sm p-4 rounded-4">
-                <h2 class="fw-bold mb-4 text-center">Contact Us</h2>
-                <p class="text-center text-muted mb-4">Have questions? We'd love to hear from you. Fill out the form below and we will get back to you as soon as possible.</p>
+    <div class="row g-5 justify-content-center">
+        <!-- Contact Form -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+                <h2 class="fw-bold mb-4">Get in Touch</h2>
+                <p class="text-muted mb-4">Fill out the form below and our team will get back to you within 24 hours.</p>
                 
                 <form method="post" action="{% url 'courses:contact' %}">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="name" class="form-label fw-bold">Full Name</label>
-                        <input type="text" class="form-control p-2" id="name" name="name" required placeholder="John Doe">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label fw-bold">Email Address</label>
-                        <input type="email" class="form-control p-2" id="email" name="email" required placeholder="john@example.com">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label fw-bold">Full Name</label>
+                            <input type="text" class="form-control p-2 bg-light border-0" id="name" name="name" required placeholder="John Doe">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label fw-bold">Email Address</label>
+                            <input type="email" class="form-control p-2 bg-light border-0" id="email" name="email" required placeholder="john@example.com">
+                        </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="subject" class="form-label fw-bold">Subject</label>
-                        <select class="form-select p-2" id="subject" name="subject" required>
+                        <select class="form-select p-2 bg-light border-0" id="subject" name="subject" required>
                             <option value="">Choose a subject...</option>
                             <option value="support">Technical Support</option>
                             <option value="billing">Billing Inquiry</option>
@@ -33,11 +35,57 @@
                     
                     <div class="mb-4">
                         <label for="message" class="form-label fw-bold">Message</label>
-                        <textarea class="form-control p-2" id="message" name="message" rows="5" required placeholder="How can we help you?"></textarea>
+                        <textarea class="form-control p-2 bg-light border-0" id="message" name="message" rows="5" required placeholder="How can we help you?"></textarea>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">Send Message</button>
+                    <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold rounded-pill shadow">Send Message</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Contact Info Side -->
+        <div class="col-lg-4">
+            <div class="p-4 rounded-4 text-white shadow" style="background-color: var(--google-grey-900); min-height: 100%;">
+                <h4 class="fw-bold mb-4">Contact Information</h4>
+                <p class="small opacity-75 mb-5">Prefer to reach out directly? Use the details below or visit our office.</p>
+
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-primary bg-opacity-25 rounded-circle p-3 me-3">
+                        <i class="bi bi-envelope fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Email Us</h6>
+                        <p class="small mb-0 opacity-75">{{ site_config.contact_email|default:"support@academic.com" }}</p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-success bg-opacity-25 rounded-circle p-3 me-3">
+                        <i class="bi bi-telephone fs-4 text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Call Us</h6>
+                        <p class="small mb-0 opacity-75">{{ site_config.contact_phone|default:"+1 (555) 000-0000" }}</p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start mb-5">
+                    <div class="bg-warning bg-opacity-25 rounded-circle p-3 me-3">
+                        <i class="bi bi-geo-alt fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Office Address</h6>
+                        <p class="small mb-0 opacity-75">{{ site_config.office_address|default:"123 Learning Way, Education City, ED 56789" }}</p>
+                    </div>
+                </div>
+
+                <hr class="opacity-25 mb-4">
+                <h6 class="fw-bold mb-3">Follow Us</h6>
+                <div class="d-flex gap-3">
+                    <a href="{{ site_config.facebook_url|default:'#' }}" class="btn btn-outline-light btn-sm rounded-circle"><i class="bi bi-facebook"></i></a>
+                    <a href="{{ site_config.twitter_url|default:'#' }}" class="btn btn-outline-light btn-sm rounded-circle"><i class="bi bi-twitter-x"></i></a>
+                    <a href="{{ site_config.linkedin_url|default:'#' }}" class="btn btn-outline-light btn-sm rounded-circle"><i class="bi bi-linkedin"></i></a>
+                </div>
             </div>
         </div>
     </div>

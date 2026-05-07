@@ -4,39 +4,66 @@
 
 {% block extrastyle %}
 <style>
-/* Override default Django Admin styles with Google Material UX */
-#header {
-    background-color: #1a73e8 !important;
-    color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Coursera-inspired Admin Overrides */
+:root {
+    --admin-primary: #0056D2;
+    --admin-bg: #F5F7F8;
+    --admin-text: #1F1F1F;
 }
+
+#header {
+    background-color: var(--admin-primary) !important;
+    color: #fff;
+    padding: 15px 40px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
 #branding h1 {
     color: #fff;
-    font-weight: 500;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -0.5px;
 }
+
+#branding h1 a {
+    color: #fff !important;
+}
+
 .module h2, .module caption, .inline-group h2 {
-    background: #f8f9fa !important;
-    color: #202124 !important;
-    border-bottom: 2px solid #ea4335;
+    background: #FFFFFF !important;
+    color: var(--admin-primary) !important;
+    border-bottom: 2px solid var(--admin-primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
 }
+
 .button, input[type=submit], input[type=button], .submit-row input, a.button {
-    background: #1a73e8;
-    border-radius: 4px;
-    border: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    background: var(--admin-primary) !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+    padding: 10px 20px !important;
+    border: none !important;
 }
+
 .button:hover, input[type=submit]:hover, input[type=button]:hover {
-    background: #174ea6;
+    background: #00419e !important;
 }
+
 body {
-    background-color: #f8f9fa;
-    font-family: 'Roboto', 'Inter', sans-serif;
+    background-color: var(--admin-bg);
+    font-family: 'Inter', 'Open Sans', sans-serif;
 }
-a {
-    color: #1a73e8;
+
+#content-main {
+    padding: 40px;
 }
-a:hover {
-    color: #174ea6;
+
+.card, .module {
+    border: 1px solid #D1D7DC !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+    border-radius: 8px !important;
 }
 </style>
 {% endblock %}

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Sum, Q
 
-from courses.models import Course, Lesson, Payment
+from courses.models import Course, Lesson, Payment, CategoryRequest, Category
 from instructor.forms import CourseForm, LessonForm
 from courses.views import instructor_required
 
@@ -104,3 +104,47 @@ def course_toggle_publish_view(request, slug):
     status = "published" if course.is_published else "hidden"
     messages.success(request, f"Course successfully {status}!")
     return redirect("instructor:dashboard")
+
+
+@login_required
+@instructor_required
+def lesson_edit_view(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id, course__instructor=request.user)
+    if request.method == "POST":
+        form = LessonForm(request.POST, request.FILES, instance=lesson)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Chapter updated successfully!")
+            return redirect("instructor:dashboard")
+    else:
+        form = LessonForm(instance=lesson)
+    return render(request, "instructor/lesson_form.html", {"form": form, "course": lesson.course, "is_edit": True})
+
+
+@login_required
+@instructor_required
+@require_http_methods(["POST"])
+def lesson_delete_view(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id, course__instructor=request.user)
+    lesson.delete()
+    messages.success(request, "Chapter deleted successfully.")
+    return redirect("instructor:dashboard")
+
+
+@login_required
+@instructor_required
+def category_request_view(request):
+    from courses.forms import CategoryRequestForm
+    if request.method == "POST":
+        form = CategoryRequestForm(request.POST)
+        if form.is_valid():
+            cat_request = form.save(commit=False)
+            cat_request.instructor = request.user
+            cat_request.save()
+            messages.success(request, "Category request submitted! Admin will review it.")
+            return redirect("instructor:dashboard")
+    else:
+        form = CategoryRequestForm()
+    
+    requests = CategoryRequest.objects.filter(instructor=request.user).order_by('-created_at')
+    return render(request, "instructor/category_request.html", {"form": form, "requests": requests})

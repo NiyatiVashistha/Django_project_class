@@ -27,6 +27,16 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Sign In</button>
+
+                <div class="position-relative my-4">
+                    <hr class="text-muted">
+                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-2 text-muted small">OR</span>
+                </div>
+
+                <a href="{% url 'accounts:google_login' %}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2 mb-3" style="border-color: #dadce0;">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google Logo" style="width: 18px;">
+                    <span style="font-weight: 500;">Sign in with Google</span>
+                </a>
             </form>
             
             <div class="text-center mt-4">

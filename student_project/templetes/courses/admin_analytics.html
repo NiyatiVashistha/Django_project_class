@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Analytics - Academic LMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-5 mb-1" style="font-weight: 700; letter-spacing: -1px;">Platform Analytics</h1>
+            <p class="text-secondary mb-0">Overview of your LMS performance and growth.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'courses:site_config' %}" class="btn btn-outline-primary">
+                Site Settings
+            </a>
+            <button class="btn btn-primary" onclick="window.print()">
+                Export Report
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card h-100 p-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%); border-radius: 16px;">
+                <h6 class="text-primary fw-bold small text-uppercase">Total Revenue</h6>
+                <p class="h2 fw-bold mb-0">₹{{ total_revenue }}</p>
+                <div class="mt-2 small text-primary">Last 7 days: <strong>₹{{ recent_revenue }}</strong></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 p-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #e6f4ea 0%, #ceead6 100%); border-radius: 16px;">
+                <h6 class="text-success fw-bold small text-uppercase">Total Students</h6>
+                <p class="h2 fw-bold mb-0">{{ total_students }}</p>
+                <div class="mt-2 small text-success">New (30d): <strong>+{{ student_growth }}</strong></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 p-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #fef7e0 0%, #feefc3 100%); border-radius: 16px;">
+                <h6 class="text-warning-emphasis fw-bold small text-uppercase">Courses</h6>
+                <p class="h2 fw-bold mb-0">{{ total_courses }}</p>
+                <div class="mt-2 small text-warning-emphasis">Growth: <strong>Stable</strong></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 p-4 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <h6 class="text-secondary fw-bold small text-uppercase">Active Offers</h6>
+                <p class="h2 fw-bold mb-0">{% if site_config.show_offer %}1{% else %}0{% endif %}</p>
+                <div class="mt-2 small text-muted">Announcements: <strong>{% if site_config.show_announcement %}ON{% else %}OFF{% endif %}</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Category Distribution -->
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                <h4 class="mb-4" style="font-weight: 600;">Category Distribution</h4>
+                <div class="row g-3">
+                    {% for cat in category_data %}
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded shadow-xs bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">{{ cat.name }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ cat.enrollment_count }}</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: {% widthratio cat.enrollment_count total_students 100 %}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Top Selling Courses -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                <h4 class="mb-4" style="font-weight: 600;">Top Selling Courses</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Course Title</th>
+                                <th class="border-0">Category</th>
+                                <th class="border-0 text-center">Enrollments</th>
+                                <th class="border-0 text-end">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in top_courses %}
+                            <tr>
+                                <td class="py-3 fw-bold">{{ course.title }}</td>
+                                <td class="text-secondary">{{ course.category.name|default:"General" }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark rounded-pill px-3">{{ course.enrollments_count }}</span>
+                                </td>
+                                <td class="text-end">₹{{ course.price }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No course data available yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                <h4 class="mb-4" style="font-weight: 600;">Recent Payments</h4>
+                <div class="d-flex flex-column gap-3">
+                    {% for payment in recent_payments %}
+                    <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background-color: var(--google-grey-50);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-white shadow-sm d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                                <span class="text-primary fw-bold">₹</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ payment.enrollment.student.username }}</h6>
+                                <p class="small text-muted mb-0">{{ payment.enrollment.course.title|truncatechars:30 }}</p>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h6 class="mb-0 fw-bold text-success">₹{{ payment.amount }}</h6>
+                            <p class="small text-muted mb-0">{{ payment.paid_at|date:"M d" }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">No recent payments found.</div>
+                    {% endfor %}
+                </div>
+                {% if recent_payments %}
+                <div class="text-center mt-4">
+                    <a href="#" class="text-primary text-decoration-none small fw-bold">View All Transactions &rarr;</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Chatbot Interactions -->
+    <div class="row g-4 mt-4">
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0" style="font-weight: 600;">Recent Chatbot Interactions</h4>
+                    <span class="badge bg-primary rounded-pill">Staff Oversight</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>User</th>
+                                <th>Message</th>
+                                <th>Bot Response</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for chat in recent_chats %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-light d-flex justify-content-center align-items-center" style="width: 32px; height: 32px;">
+                                            <i class="bi bi-person text-secondary"></i>
+                                        </div>
+                                        <span class="fw-bold small">{{ chat.user.username|default:"Guest" }}</span>
+                                    </div>
+                                </td>
+                                <td><div class="small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ chat.message }}</div></td>
+                                <td><div class="small text-muted italic" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">"{{ chat.response }}"</div></td>
+                                <td><span class="small text-secondary">{{ chat.timestamp|timesince }} ago</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">No interactions recorded yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-4px);
+    }
+    .badge {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

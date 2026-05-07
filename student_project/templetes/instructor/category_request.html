@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Request New Category - Instructor Dashboard{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card card-material p-4 shadow-sm h-100">
+                <h3 class="mb-4" style="color: #202124;">Request New Category</h3>
+                <p class="text-secondary mb-4">Can't find a suitable category for your course? Suggest a new one here. Admin will review and approve it shortly.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill py-2">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px;">
+                <h4 class="mb-4">My Requests</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Parent</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in requests %}
+                                <tr>
+                                    <td class="fw-bold">{{ req.name }}</td>
+                                    <td class="text-secondary">{{ req.parent.name|default:"Root" }}</td>
+                                    <td>
+                                        {% if req.is_approved %}
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-3">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-warning rounded-pill px-3">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small text-muted">{{ req.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">You haven't requested any categories yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

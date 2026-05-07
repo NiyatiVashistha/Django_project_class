@@ -3,15 +3,20 @@
 {% block title %}{{ course.title }} - Learning Portal{% endblock %}
 
 {% block content %}
-<div class="row g-0 vh-100 overflow-hidden" style="margin-top: -1.5rem;">
+<div class="row g-0 vh-100 overflow-hidden">
     <!-- Lesson Sidebar -->
-    <div class="col-md-3 bg-white border-end h-100 overflow-y-auto">
+    <div class="col-md-3 bg-white border-end h-100 overflow-y-auto shadow-sm">
         <div class="p-4 border-bottom">
-            <h5 class="fw-bold mb-1">{{ course.title }}</h5>
-            <div class="progress mt-2" style="height: 6px;">
-                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            <h5 class="fw-bold mb-2" style="font-size: 1rem;">{{ course.title }}</h5>
+            <div class="progress mb-2" style="height: 8px; border-radius: 4px; background-color: #E8EAED;">
+                <div class="progress-bar" role="progressbar" 
+                     style="width: {{ progress_percent }}%; background-color: var(--primary-color);" 
+                     aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-            <small class="text-muted mt-2 d-block">0% Complete</small>
+            <div class="d-flex justify-content-between">
+                <small class="text-muted fw-bold" style="font-size: 0.75rem;">{{ progress_percent }}% COMPLETE</small>
+                <small class="text-muted" style="font-size: 0.75rem;">{{ lessons.count }} Lessons</small>
+            </div>
         </div>
         
         <div class="list-group list-group-flush">
@@ -19,8 +24,12 @@
             <a href="?lesson={{ lesson.id }}" class="list-group-item list-group-item-action border-0 py-3 px-4 {% if lesson == current_lesson %}bg-primary bg-opacity-10 active{% endif %}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <span class="badge rounded-circle bg-{% if lesson == current_lesson %}primary{% else %}light text-dark{% endif %} me-3" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">
-                            {{ lesson.order }}
+                        <span class="badge rounded-circle bg-{% if lesson == current_lesson %}primary{% elif lesson.id in completed_lesson_ids %}success{% else %}light text-dark{% endif %} me-3" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">
+                            {% if lesson.id in completed_lesson_ids %}
+                                <i class="bi bi-check"></i>
+                            {% else %}
+                                {{ lesson.order }}
+                            {% endif %}
                         </span>
                         <div>
                             <h6 class="mb-0 fw-bold {% if lesson == current_lesson %}text-primary{% endif %}" style="font-size: 0.9rem;">{{ lesson.title }}</h6>
@@ -51,10 +60,8 @@
                                 <source src="{{ current_lesson.video_file.url }}" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
-                        {% elif "youtube.com" in current_lesson.video_url or "youtu.be" in current_lesson.video_url %}
-                            <iframe src="{{ current_lesson.video_url|replace:'watch?v=,embed/' }}" allowfullscreen></iframe>
                         {% else %}
-                            <iframe src="{{ current_lesson.video_url }}" allowfullscreen></iframe>
+                            <iframe src="{{ current_lesson.get_embed_url }}" allowfullscreen></iframe>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -81,8 +88,11 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center mt-5">
-                <button class="btn btn-light border rounded-pill px-4">&larr; Previous Lesson</button>
-                <button class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow">Mark as Complete & Next &rarr;</button>
+                <a href="javascript:history.back()" class="btn btn-light border rounded-pill px-4">&larr; Previous</a>
+                <form action="{% url 'courses:complete_lesson' course.slug current_lesson.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow">Mark as Complete & Next &rarr;</button>
+                </form>
             </div>
         </div>
         {% else %}

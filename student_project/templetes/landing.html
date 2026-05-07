@@ -3,27 +3,40 @@
 
 {% block content %}
 <!-- Hero Section -->
-<div class="py-5 mb-5 rounded-5 position-relative overflow-hidden shadow-sm" style="background-color: #ffffff; border: 1px solid var(--border-color); min-height: 500px; display: flex; align-items: center;">
-    <div class="container position-relative z-1">
+<div class="py-5 mb-5 overflow-hidden" style="background-color: var(--bg-surface); border-bottom: 1px solid var(--border-color); min-height: 550px; display: flex; align-items: center;">
+    <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-7">
-                <h1 class="display-3 fw-bold mb-4" style="color: var(--google-grey-900); letter-spacing: -1.5px;">Learn Without Limits</h1>
-                <p class="lead mb-5" style="color: var(--google-grey-700); font-size: 1.25rem;">Start, switch, or advance your career with more than 5,000 courses, Professional Certificates, and degrees from world-class universities and companies.</p>
-                
-                <div class="d-flex gap-3 mb-5">
-                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg px-5 py-3">Join for Free</a>
-                    <a href="{% url 'courses:course_list' %}" class="btn btn-outline-primary btn-lg px-5 py-3">Explore Courses</a>
+                <div class="pe-lg-5">
+                    <h1 class="display-3 fw-bold mb-4" style="color: var(--secondary-color); letter-spacing: -1.5px; line-height: 1.1;">
+                        {{ site_config.hero_title|default:"Learn Without Limits" }}
+                    </h1>
+                    <p class="lead mb-5 text-muted" style="font-size: 1.25rem;">
+                        {{ site_config.hero_subtitle|default:"Start, switch, or advance your career with more than 5,000 courses from world-class universities and companies." }}
+                    </p>
+                    
+                    <div class="d-flex flex-wrap gap-3 mb-5">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary px-5 py-3 shadow-lg">Join for Free</a>
+                        <a href="{% url 'courses:course_list' %}" class="btn btn-outline-primary px-5 py-3">Explore All Courses</a>
+                    </div>
+                    
+                    <form action="{% url 'courses:course_list' %}" method="get" class="d-flex p-1 bg-white border rounded shadow-sm" style="max-width: 600px;">
+                        <input type="text" name="q" class="form-control border-0 bg-transparent ps-4" placeholder="What do you want to learn?" style="box-shadow: none;">
+                        <button type="submit" class="btn btn-primary rounded px-4">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
                 </div>
-                
-                <form action="{% url 'courses:course_list' %}" method="get" class="d-flex shadow-sm rounded-pill bg-light p-2 border">
-                    <input type="text" name="q" class="form-control border-0 bg-transparent ps-4" placeholder="What do you want to learn today?" style="font-size: 1.1rem; box-shadow: none;">
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 ms-2 fw-bold">Search</button>
-                </form>
             </div>
             <div class="col-lg-5 d-none d-lg-block">
                 <div class="position-relative">
-                    <div class="bg-primary opacity-10 rounded-circle position-absolute" style="width: 400px; height: 400px; top: -50px; right: -50px;"></div>
-                    <img src="https://www.gstatic.com/marketing-content/static/images/google-cloud-hero.png" alt="Hero Illustration" class="img-fluid position-relative z-1" style="max-height: 400px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));" onerror="this.src='https://via.placeholder.com/400x400?text=Learning';">
+                    {% if site_config.hero_image %}
+                        <img src="{{ site_config.hero_image.url }}" alt="Hero Illustration" class="img-fluid rounded shadow-lg" style="max-height: 450px; transform: rotate(1deg);">
+                    {% else %}
+                        <div class="bg-primary bg-opacity-10 rounded-lg shadow-inner d-flex align-items-center justify-content-center" style="width: 100%; height: 400px; border-radius: var(--radius-lg);">
+                            <i class="bi bi-mortarboard-fill text-primary" style="font-size: 8rem; opacity: 0.2;"></i>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -33,30 +46,37 @@
 <div class="container">
     <!-- Popular Courses Section -->
     <div class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold">Most Popular</h2>
-            <a href="{% url 'courses:course_list' %}?sort_by=popular" class="btn btn-link text-primary fw-bold text-decoration-none">Explore All</a>
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="fw-bold mb-0">Most Popular</h2>
+                <p class="text-muted small">The most enrolled courses this month</p>
+            </div>
+            <a href="{% url 'courses:course_list' %}?sort=popular" class="btn btn-outline-primary btn-sm rounded-pill">View All</a>
         </div>
         <div class="row g-4">
             {% for course in popular_courses %}
             <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm transition-card">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden">
                     {% if course.thumbnail %}
-                    <img src="{{ course.thumbnail.url }}" class="card-img-top rounded-top" alt="{{ course.title }}" style="height: 160px; object-fit: cover;">
+                        <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}" style="height: 180px; object-fit: cover;">
                     {% else %}
-                    <div class="bg-light rounded-top d-flex align-items-center justify-content-center" style="height: 160px;">
-                        <i class="bi bi-book text-muted opacity-25" style="font-size: 3rem;"></i>
-                    </div>
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                            <i class="bi bi-journal-text text-muted opacity-25" style="font-size: 3rem;"></i>
+                        </div>
                     {% endif %}
-                    <div class="card-body p-3">
-                        <small class="text-primary fw-bold text-uppercase" style="font-size: 0.7rem;">{{ course.category.name|default:"General" }}</small>
-                        <h6 class="card-title fw-bold mt-1 mb-2">{{ course.title }}</h6>
-                        <p class="text-muted small mb-0">By {{ course.instructor.username }}</p>
+                    <div class="card-body p-4">
+                        <small class="text-primary fw-bold text-uppercase mb-2 d-block" style="font-size: 0.7rem; letter-spacing: 1px;">{{ course.category.name|default:"SKILLSET" }}</small>
+                        <h6 class="card-title fw-bold mb-3 h5">{{ course.title }}</h6>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stars me-2">★★★★★</div>
+                            <small class="text-muted">(4.8)</small>
+                        </div>
+                        <p class="text-muted small mb-0">Instructor: <strong>{{ course.instructor.username }}</strong></p>
                     </div>
-                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                    <div class="card-footer bg-white border-0 p-4 pt-0">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-dark">{% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}</span>
-                            <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">View</a>
+                            <span class="fw-bold fs-5">{% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}</span>
+                            <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-link text-primary p-0 fw-bold">Enroll &rarr;</a>
                         </div>
                     </div>
                 </div>
@@ -67,27 +87,31 @@
 
     <!-- New Courses Section -->
     <div class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold">New Courses</h2>
-            <a href="{% url 'courses:course_list' %}?sort_by=new" class="btn btn-link text-primary fw-bold text-decoration-none">Check Newest</a>
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="fw-bold mb-0">Newest Courses</h2>
+                <p class="text-muted small">Fresh content from our expert instructors</p>
+            </div>
+            <a href="{% url 'courses:course_list' %}?sort=newest" class="btn btn-outline-primary btn-sm rounded-pill">View Newest</a>
         </div>
         <div class="row g-4">
             {% for course in new_courses %}
             <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm transition-card">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden">
                     {% if course.thumbnail %}
-                    <img src="{{ course.thumbnail.url }}" class="card-img-top rounded-top" alt="{{ course.title }}" style="height: 160px; object-fit: cover;">
+                        <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}" style="height: 180px; object-fit: cover;">
                     {% else %}
-                    <div class="bg-light rounded-top d-flex align-items-center justify-content-center" style="height: 160px;">
-                        <i class="bi bi-star text-muted opacity-25" style="font-size: 3rem;"></i>
-                    </div>
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                            <i class="bi bi-stars text-primary opacity-25" style="font-size: 3rem;"></i>
+                        </div>
                     {% endif %}
-                    <div class="card-body p-3">
-                        <small class="text-success fw-bold text-uppercase" style="font-size: 0.7rem;">JUST ADDED</small>
-                        <h6 class="card-title fw-bold mt-1 mb-2">{{ course.title }}</h6>
+                    <div class="card-body p-4">
+                        <small class="text-success fw-bold text-uppercase mb-2 d-block" style="font-size: 0.7rem; letter-spacing: 1px;">NEW ARRIVAL</small>
+                        <h6 class="card-title fw-bold mb-3 h5">{{ course.title }}</h6>
+                        <p class="text-muted small mb-0">Level: <span class="text-dark">{{ course.get_difficulty_display }}</span></p>
                     </div>
-                    <div class="card-footer bg-white border-0 pt-0 pb-3">
-                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-primary btn-sm rounded-pill w-100">Enroll Now</a>
+                    <div class="card-footer bg-white border-0 p-4 pt-0">
+                        <a href="{% url 'courses:course_detail' course.slug %}" class="btn btn-primary w-100 rounded">Get Started</a>
                     </div>
                 </div>
             </div>
@@ -116,8 +140,61 @@
             </div>
             {% endfor %}
         </div>
+    <!-- Featured Categories Section -->
+    <div class="mb-5 py-5" style="background-color: var(--bg-surface); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold h1">Explore Top Categories</h2>
+                <p class="text-muted">Start learning from the world's best instructors in these high-demand fields.</p>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-6 col-md-3">
+                    <a href="{% url 'courses:course_list' %}?q=IT" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-4 h-100">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-4 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-laptop text-primary fs-2"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark">IT & Software</h6>
+                            <small class="text-muted">1,200+ Courses</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{% url 'courses:course_list' %}?q=Marketing" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-4 h-100">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-4 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-megaphone text-success fs-2"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark">Marketing</h6>
+                            <small class="text-muted">850+ Courses</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{% url 'courses:course_list' %}?q=Management" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-4 h-100">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-4 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-briefcase text-warning fs-2"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark">Management</h6>
+                            <small class="text-muted">600+ Courses</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{% url 'courses:course_list' %}?q=Science" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-4 h-100">
+                            <div class="rounded-circle bg-danger bg-opacity-10 p-4 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-microscope text-danger fs-2"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark">Science</h6>
+                            <small class="text-muted">450+ Courses</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
 <!-- FAQ Section (Keep existing but polish) -->
 <div class="container py-5">
