@@ -6,3 +6,6 @@ __pycache__/
 db.sqlite3
 backup_db.sqlite3
 media/
+
+check_settings.py
+scratch_stripe_test.py
