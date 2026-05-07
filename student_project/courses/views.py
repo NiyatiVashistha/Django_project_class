@@ -25,7 +25,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 
-from courses.models import Course, Enrollment, Lesson, Payment, Review, Community, CommunityMessage, Category
+from courses.models import Course, Enrollment, Lesson, Payment, Review, Community, CommunityMessage, Category, LessonProgress
 from courses.services import (
     search_courses,
     enroll_student,
@@ -538,6 +538,40 @@ def cart_add(request, course_id):
     return redirect("courses:cart")
 
 
+@login_required
+@require_http_methods(["POST"])
+def cart_checkout(request):
+    """Enrolls the user in all courses in the cart and processes payment requirements."""
+    cart = request.session.get('cart', {})
+    if not cart:
+        messages.warning(request, "Your cart is empty.")
+        return redirect("courses:course_list")
+        
+    course_ids = cart.keys()
+    courses = Course.objects.filter(id__in=course_ids)
+    
+    any_paid = False
+    first_paid_slug = None
+    
+    for course in courses:
+        enrollment, created = enroll_student(request.user, course)
+        if not course.is_free and not any_paid:
+            # Check if already paid
+            if not Payment.objects.filter(enrollment=enrollment, status=Payment.Status.COMPLETED).exists():
+                any_paid = True
+                first_paid_slug = course.slug
+            
+    # Clear cart after processing
+    request.session['cart'] = {}
+    
+    if any_paid:
+        messages.success(request, "Enrollment initiated. Please complete payment for the course.")
+        return redirect("courses:payment", slug=first_paid_slug)
+    
+    messages.success(request, "Successfully enrolled in all courses from your cart!")
+    return redirect("courses:dashboard")
+
+
 def cart_remove(request, course_id):
     """Removes a course from the session-based cart."""
     cart = request.session.get('cart', {})
@@ -622,7 +656,12 @@ def admin_mail_draft_view(request):
 
 @login_required
 def community_create_view(request):
-    """Allows authenticated users to create a new community."""
+    """Allows instructors and admins to create a new community."""
+    from accounts.models import User
+    if request.user.role not in [User.Role.INSTRUCTOR, User.Role.ADMIN]:
+        messages.error(request, "Only instructors or admins can create communities.")
+        return redirect("courses:community_list")
+        
     from courses.forms import CommunityForm
     from courses.models import Community
     if request.method == "POST":
@@ -643,7 +682,15 @@ def community_create_view(request):
 @login_required
 def course_review_view(request, slug):
     from courses.forms import ReviewForm
+    from accounts.models import User
+    
     course = get_object_or_404(Course, slug=slug)
+    
+    # Only students who are enrolled can leave reviews
+    if request.user.role != User.Role.STUDENT:
+        messages.error(request, "Only students can leave reviews.")
+        return redirect("courses:course_detail", slug=slug)
+        
     if not is_enrolled(request.user, course):
         messages.error(request, "You must be enrolled to leave a review.")
         return redirect("courses:course_detail", slug=slug)

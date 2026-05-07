@@ -8,7 +8,7 @@
             <h1 class="fw-bold text-dark mb-1">Explore Communities</h1>
             <p class="text-muted mb-0">Join groups of like-minded learners and instructors.</p>
         </div>
-        {% if request.user.is_authenticated %}
+        {% if request.user.role == 'instructor' or request.user.role == 'admin' %}
         <a href="{% url 'courses:community_create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
             <i class="bi bi-plus-lg me-1"></i> Create Community
         </a>

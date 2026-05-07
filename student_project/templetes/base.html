@@ -88,54 +88,78 @@
         /* Enterprise-Grade Buttons */
         .btn {
             font-weight: 700;
-            padding: 10px 24px;
+            padding: 12px 28px;
             border-radius: var(--radius-sm);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            letter-spacing: 0.2px;
+            border: 2px solid transparent;
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 86, 210, 0.35) !important;
         }
 
         .btn-primary {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 6px rgba(0, 86, 210, 0.15);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover) !important;
+            border-color: var(--primary-hover) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 86, 210, 0.25);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color) !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 86, 210, 0.15);
+        }
+
+        /* Secondary Button (Outline) */
+        .btn-outline-secondary {
+            color: var(--text-main) !important;
+            border-color: var(--border-color) !important;
+            background-color: #ffffff !important;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--bg-page) !important;
+            border-color: var(--text-main) !important;
+            color: var(--text-main) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Specialized Buttons */
+        .btn-google {
             background-color: var(--primary-color) !important;
             border: 2px solid var(--primary-color) !important;
             color: #ffffff !important;
             box-shadow: 0 4px 6px rgba(0, 86, 210, 0.2);
         }
 
-        .btn-primary:hover {
+        .btn-google:hover {
             background-color: var(--primary-hover) !important;
             border-color: var(--primary-hover) !important;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 12px rgba(0, 86, 210, 0.3);
-        }
-
-        .btn-outline-primary {
-            color: var(--primary-color) !important;
-            border: 2px solid var(--primary-color) !important;
-            background-color: transparent !important;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-outline-primary:hover {
-            background-color: var(--primary-color) !important;
-            color: #ffffff !important;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* Secondary Button (Outline) */
-        .btn-outline-secondary {
-            color: var(--text-main) !important;
-            border: 2px solid var(--text-main) !important;
-            background-color: transparent !important;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: var(--text-main) !important;
-            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 86, 210, 0.3);
         }
 
         /* Cards & Containers */
@@ -294,7 +318,7 @@
     </main>
 
     <!-- Professional Commercial Footer -->
-    <footer class="py-5 mt-auto" style="background-color: var(--google-grey-900); color: #ffffff;">
+    <footer class="py-5 mt-auto" style="background-color: var(--secondary-color); color: #ffffff;">
         <div class="container">
             <div class="row g-4 mb-5">
                 <div class="col-lg-4">
@@ -371,7 +395,6 @@
                     <button class="btn btn-outline-secondary border-start-0 border px-3 fw-bold" type="button" id="voice-btn" style="background-color: transparent;">
                         MIC
                     </button>
-                    <!-- SEND TEXT -->
                     <button class="btn btn-primary px-3 fw-bold" type="button" id="send-btn">
                         SEND
                     </button>

@@ -27,6 +27,7 @@ urlpatterns = [
     path("cart/", views.cart_view, name="cart"),
     path("cart/add/<int:course_id>/", views.cart_add, name="cart_add"),
     path("cart/remove/<int:course_id>/", views.cart_remove, name="cart_remove"),
+    path("cart/checkout/", views.cart_checkout, name="cart_checkout"),
 
     # Social & Community
     path("instructor/<int:instructor_id>/follow/", views.follow_instructor_view, name="follow_instructor"),
